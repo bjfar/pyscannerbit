@@ -1,6 +1,7 @@
-include README.md LICENSE CHANGES.txt
-global-include CMakeLists.txt *.cmake
-recursive-include src *.cpp
-recursive-include pybind11/include *.h
-recursive-include pyscannerbit *.py *.tar *nullfile
-recursive-include tests *.py *.yaml
+global-exclude *.git *.gitignore
+include README.md LICENSE CHANGES.txt CMakeLists.tx
+graft src
+graft pyscannerbit
+graft tests
+graft yaml-cpp
+graft pybind11

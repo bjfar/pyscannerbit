@@ -65,6 +65,7 @@ class CMakeBuild(build_ext_orig):
                       '-DCMAKE_INSTALL_RPATH=' + installation_path,
                       '-DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON',
                       '-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON',
+                      '-DCMAKE_INSTALL_PREFIX:PATH=' + installation_path,
                      ]
                  #    '-DPYBIND11_PYTHON_VERSION=3.6',
                  #]
@@ -102,7 +103,7 @@ class CMakeBuild(build_ext_orig):
         subprocess.check_call(['ls', ext.sourcedir+'/pyscannerbit/scannerbit'], cwd=self.build_temp, env=env)
    
         # untar ScannerBit tarball
-        subprocess.check_call(['tar','-C','pyscannerbit/scannerbit/untar/ScannerBit','-xf','pyscannerbit/scannerbit/ScannerBit-1.1.3.tar','--strip-components=1'], cwd=ext.sourcedir, env=env)
+        subprocess.check_call(['tar','-C','pyscannerbit/scannerbit/untar/ScannerBit','-xf','pyscannerbit/scannerbit/ScannerBit_stripped.tar','--strip-components=1'], cwd=ext.sourcedir, env=env)
       
         # First cmake
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
@@ -112,6 +113,8 @@ class CMakeBuild(build_ext_orig):
         subprocess.check_call(['cmake', ext.sourcedir], cwd=self.build_temp)
         # Main build
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
+        # Install
+        #subprocess.check_call(['cmake', '--build', '.', '--target', 'install'], cwd=self.build_temp)
 
     ##def build_cmake(self, ext):
     ##    cwd = pathlib.Path().absolute()
@@ -171,7 +174,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.1',
+    version='0.0.2',
     author='Ben Farmer',
     author_email='ben.farmer@gmail.com',
     description='A python interface to the GAMBIT scanning module, ScannerBit',

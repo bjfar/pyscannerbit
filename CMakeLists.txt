@@ -19,6 +19,14 @@
 cmake_minimum_required(VERSION 2.8.5 FATAL_ERROR)
 project(pyscannerbit)
 
+# Make sure -fPIC added when building subprojects like yaml-cpp
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Want any extra libraries built by dependencies (e.g. yaml-cpp) to end up
+# in our package directory
+#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_SAVED ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerbit")
+
 # # Some stuff to make sure same version of python is used for this interface
 # # and while building ScannerBit
 # find_package(PythonInterp 3)
@@ -36,10 +44,24 @@ project(pyscannerbit)
 
 # Search for pybind11 and yaml-cpp installations
 # If not found, use versions supplied with this package
-find_package(yaml-cpp REQUIRED)
-#find_package(pybind11 REQUIRED)
-add_subdirectory("${PROJECT_SOURCE_DIR}/pybind11")
+# (TODO: Should probably add some version restrictions)
+find_package(yaml-cpp)
+   message(   "Found yaml-cpp")
+if(NOT yaml-cpp_FOUND)
+   message(   "yaml-cpp NOT found on system, using version included with pyScannerBit package")
+   option(YAML_CPP_BUILD_TESTS "" OFF) # Disable building test suite
+   #option(BUILD_SHARED_LIBS "" ON) # Getting weird runtime errors using the static library; switch to shared.
+   add_subdirectory("${PROJECT_SOURCE_DIR}/yaml-cpp")
+   set(yaml_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/yaml-cpp/include)
+   include_directories("${yaml_INCLUDE_DIR}") # is this really necessary? Why not for pybind11? Seems needed though.
+endif()
 
+find_package(pybind11)
+   message("   Found pybind11 installation on system")
+if(NOT pybind11_FOUND)
+   message("    pybind11 NOT found on system, using version included with pyScannerBit package")
+   add_subdirectory("${PROJECT_SOURCE_DIR}/pybind11")
+endif()
 
 #find_package(ScannerBitCAPI REQUIRED)
 # Get the ScannerBitCAPI target directly from subproject?
@@ -47,7 +69,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/pybind11")
 # Generate Python module
 message("Extension module source: ${PROJECT_SOURCE_DIR}/src/pyScannerBit.cpp")
 pybind11_add_module(_interface "${PROJECT_SOURCE_DIR}/src/pyScannerBit.cpp")
-set_target_properties(_interface PROPERTIES OUTPUT_NAME pyscannerbit/_interface)
+# set_target_properties(_interface PROPERTIES OUTPUT_NAME pyscannerbit/_interface)
 
 #--- New experimental insertion
 # Want to try and build and link ScannerBitCAPI directly from here, rather
@@ -57,16 +79,10 @@ set(GAMBIT_RUN_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}") # Final package installa
 #set(LIB_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerbit") # Temporary build path (unused?)
 
 message("Setting GAMBIT_RUN_DIR to: ${GAMBIT_RUN_DIR}")
-
-# Want to change the library output path for this part of the build:
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_SAVED ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerbit")
 add_subdirectory("${GAMBIT_DIR}")
-# Revert library output path to what it was
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_SAVED})
 #--- End experimental stuff
 
-add_dependencies(_interface ScannerBitCAPI)
+add_dependencies(_interface yaml-cpp pybind11 ScannerBitCAPI)
 target_link_libraries(_interface PRIVATE yaml-cpp ScannerBitCAPI)
 
 #--- Post-build copying
@@ -113,5 +129,3 @@ copy_dir(${GAMBIT_DIR}/scratch
 # Copy each of the scanner 'backend' shared libraries
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/3.10/libnest3.so
           ${GAMBIT_RUN_DIR}/ScannerBit/installed/multinest/3.10) 
-
-
