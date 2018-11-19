@@ -7,10 +7,8 @@
 GAMBIT_DIR=$1
 
 echo "Grabbing ScannerBit tarball from $1/build..."
-cp $GAMBIT_DIR/build/ScannerBit-1.1.3.tar pyscannerbit/scannerbit/ScannerBit_TEMP.tar
 mkdir pyscannerbit/scannerbit/ScannerBit_TEMP_dir
-echo "Untarring..."
-tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf pyscannerbit/scannerbit/ScannerBit_TEMP.tar --strip-components=1 
+tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf $GAMBIT_DIR/build/ScannerBit-1.1.3.tar --strip-components=1 
 
 CONTRIB_DIR=pyscannerbit/scannerbit/ScannerBit_TEMP_dir/contrib/
 
@@ -32,5 +30,4 @@ rm pyscannerbit/scannerbit/ScannerBit_stripped.tar
 tar -C pyscannerbit/scannerbit -cf pyscannerbit/scannerbit/ScannerBit_stripped.tar ScannerBit_TEMP_dir
 echo "Deleting temporary files..."
 rm -rf pyscannerbit/scannerbit/ScannerBit_TEMP_dir
-rm pyscannerbit/scannerbit/ScannerBit_TEMP.tar 
 echo "Done!"
