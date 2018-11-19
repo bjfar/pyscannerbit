@@ -174,8 +174,9 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.2',
+    version='0.0.3',
     author='Ben Farmer',
+    # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
     description='A python interface to the GAMBIT scanning module, ScannerBit',
     long_description='',

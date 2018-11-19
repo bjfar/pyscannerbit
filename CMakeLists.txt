@@ -46,9 +46,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerb
 # If not found, use versions supplied with this package
 # (TODO: Should probably add some version restrictions)
 find_package(yaml-cpp)
-   message(   "Found yaml-cpp")
-if(NOT yaml-cpp_FOUND)
-   message(   "yaml-cpp NOT found on system, using version included with pyScannerBit package")
+if(yaml-cpp_FOUND)
+   message("   Found yaml-cpp")
+else()
+   message("   yaml-cpp NOT found on system, using version included with pyScannerBit package")
    option(YAML_CPP_BUILD_TESTS "" OFF) # Disable building test suite
    #option(BUILD_SHARED_LIBS "" ON) # Getting weird runtime errors using the static library; switch to shared.
    add_subdirectory("${PROJECT_SOURCE_DIR}/yaml-cpp")
@@ -57,9 +58,10 @@ if(NOT yaml-cpp_FOUND)
 endif()
 
 find_package(pybind11)
+if(pybind11_FOUND)
    message("   Found pybind11 installation on system")
-if(NOT pybind11_FOUND)
-   message("    pybind11 NOT found on system, using version included with pyScannerBit package")
+else()
+   message("   pybind11 NOT found on system, using version included with pyScannerBit package")
    add_subdirectory("${PROJECT_SOURCE_DIR}/pybind11")
 endif()
 

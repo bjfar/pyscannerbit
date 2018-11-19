@@ -47,9 +47,7 @@ Package structure
 
 This information is mainly for developers, but it might be helpful to know this
 if you are having installation trouble (though if this is the case please file
-or check the bug reports at 
-
-    https://github.com/bjfar/pyscannerbit/issues
+or check the bug reports at `https://github.com/bjfar/pyscannerbit/issues`)
 
 This package is primarily a Python interface to a C API that is built by the
 GAMBIT build system. This system in turn automatically downloads and build
