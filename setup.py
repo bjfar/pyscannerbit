@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import sysconfig
+import site
 import platform
 import subprocess
 import pathlib
@@ -92,15 +93,15 @@ class CMakeBuild(build_ext_orig):
             os.makedirs(self.build_temp)
 
         # Debugging paths
-        print("Debugging paths:")
-        subprocess.check_call(['pwd'], cwd=self.build_temp, env=env)
-        subprocess.check_call(['echo',self.build_temp], cwd=self.build_temp, env=env)
-        # cwd = pathlib.Path().absolute()
-        # print("ext.sourcedir:")
-        # subprocess.check_call(['echo', ext.sourcedir], cwd=self.build_temp, env=env)
-        # subprocess.check_call(['echo',cwd], cwd=self.build_temp, env=env) 
-        subprocess.check_call(['ls', ext.sourcedir], cwd=self.build_temp, env=env)
-        subprocess.check_call(['ls', ext.sourcedir+'/pyscannerbit/scannerbit'], cwd=self.build_temp, env=env)
+        # print("Debugging paths:")
+        # subprocess.check_call(['pwd'], cwd=self.build_temp, env=env)
+        # subprocess.check_call(['echo',self.build_temp], cwd=self.build_temp, env=env)
+        # # cwd = pathlib.Path().absolute()
+        # # print("ext.sourcedir:")
+        # # subprocess.check_call(['echo', ext.sourcedir], cwd=self.build_temp, env=env)
+        # # subprocess.check_call(['echo',cwd], cwd=self.build_temp, env=env) 
+        # subprocess.check_call(['ls', ext.sourcedir], cwd=self.build_temp, env=env)
+        # subprocess.check_call(['ls', ext.sourcedir+'/pyscannerbit/scannerbit'], cwd=self.build_temp, env=env)
    
         # untar ScannerBit tarball
         subprocess.check_call(['tar','-C','pyscannerbit/scannerbit/untar/ScannerBit','-xf','pyscannerbit/scannerbit/ScannerBit_stripped.tar','--strip-components=1'], cwd=ext.sourcedir, env=env)
@@ -174,7 +175,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.3',
+    version='0.0.7',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',

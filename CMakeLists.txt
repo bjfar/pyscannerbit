@@ -45,16 +45,22 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerb
 # Search for pybind11 and yaml-cpp installations
 # If not found, use versions supplied with this package
 # (TODO: Should probably add some version restrictions)
-find_package(yaml-cpp)
+if(NOT USE_PYSB_YAML)
+   find_package(yaml-cpp)
+endif()
+
 if(yaml-cpp_FOUND)
    message("   Found yaml-cpp")
+   message("   libs are: ${YAML_CPP_INCLUDE_DIR}")
 else()
    message("   yaml-cpp NOT found on system, using version included with pyScannerBit package")
    option(YAML_CPP_BUILD_TESTS "" OFF) # Disable building test suite
+   option(YAML_CPP_BUILD_TOOLS "" OFF) # Disable building command line tools
    #option(BUILD_SHARED_LIBS "" ON) # Getting weird runtime errors using the static library; switch to shared.
    add_subdirectory("${PROJECT_SOURCE_DIR}/yaml-cpp")
    set(yaml_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/yaml-cpp/include)
    include_directories("${yaml_INCLUDE_DIR}") # is this really necessary? Why not for pybind11? Seems needed though.
+   set(USE_PYSB_YAML TRUE CACHE BOOL "Flag to skip find_package(yaml-cpp) and just use supplied version") # Store in cache so that we can avoid running find_package in later cmake runs (seems to spuriously 'find' yaml-cpp when it shouldn't, maybe due to cached targets imported via the add_subdirectory command? Not sure if CMake works like that or not)
 endif()
 
 find_package(pybind11)
