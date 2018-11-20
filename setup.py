@@ -52,6 +52,19 @@ class CMakeBuild(build_ext_orig):
         if platform.system() == "Windows":
             raise RuntimeError("Sorry, pyScannerBit doesn't work on Windows platforms. Please use Linux or OSX.")
 
+        # Check if we have sufficient permissions to install into the target folder
+        try:
+            print("Testing file system permissions")
+            test_path = installation_path+'/permissions_test'
+            try:
+                os.makedirs(test_path)
+            except FileExistsError:
+                os.rmdir(test_path)
+                os.makedirs(test_path) 
+            print("...permissions ok!")
+        except OSError:
+            raise RuntimeError("Failed to create test folder in target installation directory. Perhaps you do not have sufficient permissions to install here? Try again with 'sudo', or by changing the install target with the '--prefix' flag (if using pip, try adding '--user --install-option=\"--prefix=<path>\"')")
+
         for ext in self.extensions:
             self.build_extension(ext)
 
@@ -175,7 +188,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.7',
+    version='0.0.8',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
