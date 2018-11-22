@@ -2,6 +2,7 @@
 
 # Need to do a little voodoo so that dynamically loaded shared libraries
 # can dynamically load other shared libraries (the scanner plugins)
+import os
 import sys
 import ctypes
 flags = sys.getdlopenflags()
@@ -9,6 +10,12 @@ sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
 
 import inspect
 import h5py
+
+# Need to tell ScannerBit where its config files are located
+# We do this via a special environment variable
+gambit_path = os.path.dirname(__file__)
+print("Setting GAMBIT_RUN_DIR to:",gambit_path)
+os.environ["GAMBIT_RUN_DIR"] = gambit_path
 
 # Import functions from the pybind11-created interface to ScannerBitCAPI
 from ._interface import hello, run_scan

@@ -25,7 +25,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Want any extra libraries built by dependencies (e.g. yaml-cpp) to end up
 # in our package directory
 #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_SAVED ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerbit")
+#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/pyscannerbit")
 
 # # Some stuff to make sure same version of python is used for this interface
 # # and while building ScannerBit
