@@ -53,6 +53,7 @@ class Scan:
  
         if model_name is None:
            if "Parameters" in self.settings:
+              print(self.setting["Parameters"])
               self._model_name = self.settings["Parameters"].keys()[0]
            else:
               self._model_name = "default"

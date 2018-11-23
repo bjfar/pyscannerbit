@@ -7,9 +7,13 @@ import pyscannerbit.plottools as pt
 
 # Helper class to manage data/is_valid HDF5 dataset pairs 
 class DataPair:
-  def __init__(self,dset,dset_isvalid):
-     self._data  = dset
-     self._valid = dset_isvalid
+  def __init__(self,g,name,model=None):
+     try:
+         self._valid = g["{}_isvalid".format(name)]
+     except KeyError:
+         name = "{}::{}".format(model, name)
+         self._valid = g["{}_isvalid".format(name)]
+     self._data  = g[name]
   
   def data(self):
      return self._data
@@ -21,10 +25,19 @@ class DataPair:
      return self.data()[self.valid()]
 
 
-def get_data(in_group, hdf5_dataset_names):
-  output = []
+def get_data(in_group, hdf5_dataset_names, apply_common_mask=True, model=None):
+  datapairs = []
   for name in hdf5_dataset_names:
-    output += [ DataPair(in_group[name], in_group[name+"_isvalid"]) ]   
+    datapairs += [ DataPair(in_group,name,model) ]
+  output = [] 
+  if apply_common_mask:
+     m = datapairs[0].valid()
+     for d in datapairs[1:]:
+        m = m & d.valid()
+     for d in datapairs:
+        output += [d.data()[m]]
+  else:
+     output = datapairs
   return output
 
 
@@ -56,17 +69,11 @@ class HDF5(h5py.Group):
         return [k[len(prefix):] for k in self.keys()
             if k.startswith(prefix) and not k.endswith(suffix)]
 
-    def get_param(self, name):
-        """
-        """
-        try:
-            valid = self["{}_isvalid".format(name)]
-        except KeyError:
-            name = "{}::{}".format(self.model, name)
-            valid = self["{}_isvalid".format(name)]
+    def get_params(self, names):
+        return get_data(self, names, model=self.model, apply_common_mask=True)
 
-        mask = np.array(valid, dtype=np.bool)
-        return self[name][mask]
+    def get_param(self, name):
+        return get_data(self, [name], model=self.model, apply_common_mask=True)[0]
 
     def get_loglike(self):
         """

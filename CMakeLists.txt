@@ -135,5 +135,20 @@ copy_dir(${GAMBIT_DIR}/scratch
          ${GAMBIT_RUN_DIR}/scratch)
 
 # Copy each of the scanner 'backend' shared libraries
-copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/3.10/libnest3.so
-          ${GAMBIT_RUN_DIR}/ScannerBit/installed/multinest/3.10) 
+set(MULTINEST_VERSION 3.11)
+set(POLYCHORD_VERSION 1.15)
+set(DIVER_VERSION 1.0.4)
+
+# Multinest
+copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/MultiNest_v${MULTINEST_VERSION}/libnest3.so
+          ${GAMBIT_RUN_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/MultiNest_v${MULTINEST_VERSION})
+
+# Polychord
+copy_file(${GAMBIT_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib/libchord.so
+          ${GAMBIT_RUN_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib)
+
+# Diver
+copy_file(${GAMBIT_DIR}/ScannerBit/installed/diver/${DIVER_VERSION}/lib/libdiver.so
+          ${GAMBIT_RUN_DIR}/ScannerBit/installed/diver/${DIVER_VERSION}/lib)
+
+# Leaving GreAT out on purpose since it needs ROOT and that is just too painful to deal with.

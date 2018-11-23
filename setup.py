@@ -6,6 +6,7 @@ import site
 import platform
 import subprocess
 import pathlib
+import multiprocessing
 
 from distutils.version import LooseVersion
 from setuptools import setup, Extension
@@ -64,6 +65,10 @@ class CMakeBuild(build_ext_orig):
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
 
+        ncpus = multiprocessing.cpu_count()
+        if ncpus>1:
+           ncpus -= 1 # Use 1 fewer cpus than available, so the OS can still do other things
+        
         if platform.system() == "Windows":
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
             if sys.maxsize > 2**32:
@@ -71,7 +76,7 @@ class CMakeBuild(build_ext_orig):
             build_args += ['--', '/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            build_args += ['--', '-j2']
+            build_args += ['--', '-j{0}'.format(ncpus)]
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -96,7 +101,7 @@ class CMakeBuild(build_ext_orig):
         # First cmake
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=str(build_temp), env=env)
         # Build all the scanners
-        subprocess.check_call(['cmake', '--build', '.', '--target', 'multinest'] + build_args, cwd=str(build_temp))
+        subprocess.check_call(['cmake', '--build', '.', '--target', 'scanners'] + build_args, cwd=str(build_temp))
         # Re-run cmake to detect built scanner plugins
         subprocess.check_call(['cmake', ext.sourcedir], cwd=str(build_temp))
         # Main build
