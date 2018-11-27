@@ -134,9 +134,12 @@ class Scan:
         return wrapped_function
 
     def scan(self):
-        """
+        """Run a scan with ScannerBit
         """
         run_scan(self.settings, self._wrapped_function)
+        MPI.COMM_WORLD.Barrier()
+        rank = MPI.COMM_WORLD.Get_rank()
+        print("Rank {0} passed scan end barrier!".format(rank))
         self._scanned = True
 
     def get_hdf5(self):
