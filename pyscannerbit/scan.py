@@ -9,6 +9,7 @@ flags = sys.getdlopenflags()
 sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
 
 import inspect
+import copy
 import h5py
 
 # Just doing this will initialise MPI, and it will automatically
@@ -47,7 +48,7 @@ class Scan:
         self.bounds = bounds # or mean/std-dev in case of normal prior
         self.prior_types = prior_types if prior_types else ["flat"] * len(bounds)
         self.scanner = scanner
-        self.settings = _add_default_options(settings)
+        self.settings = _add_default_options(copy.deepcopy(settings))
         self.kwargs = kwargs
 
         signature = inspect.getargspec(self.function)

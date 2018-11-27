@@ -1,5 +1,7 @@
+import copy
+
 # Nested dictionary merge function
-# From: https://stackoverflow.com/a/7205107/1447953 
+# Modified from: https://stackoverflow.com/a/7205107/1447953 
 def _merge(a, b, path=None):
     "merges b into a"
     if path is None: path = []
@@ -14,6 +16,6 @@ def _merge(a, b, path=None):
                 # Actually the behaviour we want is for a to override b, so do nothing here
                 pass
         else:
-            a[key] = b[key]
+            a[key] = copy.deepcopy(b[key])
     return a
 
