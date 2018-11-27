@@ -246,7 +246,7 @@ void py_run_scan(const py::dict& d, const py::object& f)
    std::cout << root << std::endl;
 
    // Call library function
-   run_scan(root,&wrapper_func);
+   run_scan(root,&wrapper_func,false); // Last argument tells ScannerBit not to INIT_MPI. Will be done in Python.
 }
 
 void py_run_scan_from_file(const char yaml_file[], const py::object& f)
@@ -255,7 +255,7 @@ void py_run_scan_from_file(const char yaml_file[], const py::object& f)
    user_pyfunc = f;   
 
    // Call library function
-   run_scan_from_file(yaml_file,&wrapper_func);
+   run_scan_from_file(yaml_file,&wrapper_func,false); // Last argument tells ScannerBit not to INIT_MPI. Will be done in Python.
 }
 
 PYBIND11_MODULE(_interface, m) {

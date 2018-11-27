@@ -31,6 +31,16 @@ _default_options = {
       "plugin": "twalk",
       "sqrtR": 1.01, # This is a convergence criterion
       },
+    "random": {
+      "plugin": "random",
+      "point_number": 10000,
+      "like": "LogLike",
+      },
+    "toy_mcmc": {
+      "like": "LogLike",
+      "plugin": "toy_mcmc",
+      "point_number": 10000,
+      },
     },
   },
 "KeyValues": {

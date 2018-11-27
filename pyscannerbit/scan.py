@@ -13,7 +13,7 @@ import h5py
 
 # Just doing this will initialise MPI, and it will automatically
 # call 'finalize' upon exit. So we need do nothing except import this.
-import mpi4py
+from mpi4py import MPI
 
 # Need to tell ScannerBit where its config files are located
 # We do this via a special environment variable

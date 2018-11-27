@@ -123,14 +123,11 @@ class HDF5(h5py.Group):
         ax.legend()
         plt.show()
 
-    def plot_profile_likelihood(self,ax,xpar,ypar,use_default_model_name=True):
+    def plot_profile_likelihood(self,ax,xpar,ypar,use_default_model_name=True,nxbins=50,nybins=50):
         if(use_default_model_name):
            xpar = "{0}::{1}".format(self.model,xpar)
            ypar = "{0}::{1}".format(self.model,ypar)
         logl,x,y = get_data(self,[self.loglike,xpar,ypar])
-        mask = logl.valid() & x.valid() & y.valid()
-        data = np.vstack((x.data()[mask],
-                          y.data()[mask],
-                       -2*logl.data()[mask])).T
-        pt.profplot(ax,data,title=None,labels=[xpar,ypar],nxbins=50,nybins=50)
+        data = np.vstack((x,y,-2*logl)).T
+        pt.profplot(ax,data,title=None,labels=[xpar,ypar],nxbins=nxbins,nybins=nybins)
 

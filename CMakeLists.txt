@@ -143,9 +143,9 @@ set(DIVER_VERSION 1.0.4)
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/MultiNest_v${MULTINEST_VERSION}/libnest3.so
           ${GAMBIT_RUN_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/MultiNest_v${MULTINEST_VERSION})
 
-# Polychord
-copy_file(${GAMBIT_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib/libchord.so
-          ${GAMBIT_RUN_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib)
+# # Polychord
+# copy_file(${GAMBIT_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib/libchord.so
+#           ${GAMBIT_RUN_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib)
 
 # Diver
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/diver/${DIVER_VERSION}/lib/libdiver.so
