@@ -46,16 +46,26 @@ class HDF5(h5py.Group):
     Class representing HDF5 results from ScannerBit
     ===============================================
     """
-    def __init__(self, group, model=None, loglike="LogLike", posterior="Posterior"):
-        """
+    def __init__(self, group, model=None, loglike="LogLike", posterior="Posterior", h5file=None):
+        """Wrap a group in a HDF5 file
         """
         self.loglike = loglike
         self.posterior = posterior
+        self.h5file = h5file
         super().__init__(group)
         self.model = model if model else self.get_model_name()
 
-    def get_model_name(self):
+    @classmethod
+    def fromFile(clsobj, h5filename, group, model=None, loglike="LogLike", posterior="Posterior"):
+        """Alternate constructor to wrap a group directly from a file, rather than having to
+           open the file before constructing this object.
         """
+        f = h5py.File(h5filename,'r')
+        g = f[group] 
+        return clsobj(g,model,loglike,posterior,h5file=f)
+
+    def get_model_name(self):
+        """Attempt to infer model name from parameter dataset label
         """
         for k in self.keys():
             if "::" in k:

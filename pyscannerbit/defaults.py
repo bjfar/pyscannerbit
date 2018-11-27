@@ -8,23 +8,33 @@ _default_options = {
     }
   },
 "Scanner": {
-  "use_scanner": "multinest",
   "scanners": {
-    "de": {
+    "diver": {
       "plugin": "diver",
       "like": "LogLike",
+      "verbosity": 2,
       "NP": 1000,
       },
     "multinest": {
       "plugin": "multinest",
       "like":  "LogLike",
       "nlive": 1000,
-      "tol": 0.1,
-      }
-    }
+      "tol": 0.5,
+      },
+    "polychord": {
+      "plugin": "polychord",
+      "like":  "LogLike",
+      "nlive": 500,
+      "tol": 0.5,
+      },
+    "twalk": {
+      "plugin": "twalk",
+      "sqrtR": 1.01, # This is a convergence criterion
+      },
+    },
   },
 "KeyValues": {
-  "default_output_path": "pyscannerbit_run_data/unnamed_run",
+  "default_output_path": "pyscannerbit_run_data/",
   "rng": "ranlux48",
   "likelihood": {
     "model_invalid_for_lnlike_below": -1e6

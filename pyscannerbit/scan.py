@@ -11,6 +11,10 @@ sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
 import inspect
 import h5py
 
+# Just doing this will initialise MPI, and it will automatically
+# call 'finalize' upon exit. So we need do nothing except import this.
+import mpi4py
+
 # Need to tell ScannerBit where its config files are located
 # We do this via a special environment variable
 gambit_path = os.path.dirname(__file__)
@@ -36,7 +40,7 @@ class Scan:
        making some basic plots.
     """
     def __init__(self, function, bounds, prior_types, kwargs=None, scanner=None,
-      settings={}, model_name=None):
+      settings={}, model_name=None, output_path=None):
         """
         """
         self.function = function
@@ -53,17 +57,24 @@ class Scan:
  
         if model_name is None:
            if "Parameters" in self.settings:
-              print(self.setting["Parameters"])
-              self._model_name = self.settings["Parameters"].keys()[0]
+              print(self.settings["Parameters"])
+              self._model_name = list(self.settings["Parameters"].keys())[0]
            else:
               self._model_name = "default"
         self._wrapped_function = self._wrap_function()
         self._scanned = False
 
+        # Make up a name for the run, if user didn't provide one
+        if output_path is None:
+            self.settings["KeyValues"]["default_output_path"] += "{0}_scan".format(self.scanner)
+        else:
+            self.settings["KeyValues"]["default_output_path"] = output_path
+
         self._process_settings()
         self.loglike_par = "LogLike"
         self.scanner = self.settings["Scanner"]["use_scanner"] # Might have been None and then filled by _process_settings with defaults
-        if self.scanner == "multinest":
+        if self.scanner == "multinest" \
+        or self.scanner == "polychord":
             self.posterior_par = "Posterior"
         else:
             self.posterior_par = None
@@ -128,7 +139,12 @@ class Scan:
         self._scanned = True
 
     def get_hdf5(self):
-        assert self._scanned
-        return HDF5(self._get_hdf5_group().id,model=self._model_name,
-          loglike=self.loglike_par, posterior=self.posterior_par)
- 
+        try:
+            g = HDF5(self._get_hdf5_group().id,model=self._model_name,
+                loglike=self.loglike_par, posterior=self.posterior_par)
+        except:
+            if(self._scanned):
+                raise IOError("Failed to open HDF5 output of scan!")
+            else:
+                raise IOError("Failed to open HDF5 output of scan, however we did not perform a scan just now. The output will only exist if you have previously run this scan. Please check that you did this!")
+        return g
