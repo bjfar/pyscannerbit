@@ -37,9 +37,15 @@ class CMakeBuild(build_ext_orig):
         # these dirs will be created in build_py, so if you don't have
         # any python sources to bundle, the dirs will be missing
         build_temp = pathlib.Path(self.build_temp)
-        build_temp.mkdir(parents=True, exist_ok=True)
+        try:
+           build_temp.mkdir(parents=True)
+        except FileExistsError:
+           pass # This is not a problem, but exist_ok argument doesn't exist in Python <3.5
         extdir = pathlib.Path(self.get_ext_fullpath(ext.name))
-        extdir.mkdir(parents=True, exist_ok=True)
+        try:
+           extdir.mkdir(parents=True)
+        except FileExistsError:
+           pass
 
         # Temporary directory where libraries and other built files should go
         # These will get automatically copied to the final install location
@@ -111,7 +117,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.10',
+    version='0.0.12',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
