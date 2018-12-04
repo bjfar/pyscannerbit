@@ -97,8 +97,8 @@ YAML::Node pytype_to_yaml(const py::handle& value, const std::string& err)
 {
     YAML::Node node_out;
     if     (py::isinstance<py::none>(value))      node_out = YAML::Load(""); // Should give a Null node (YAML::NodeType::Null)
-    else if(py::str(value).is(py::str(Py_True)))  node_out = "true";
-    else if(py::str(value).is(py::str(Py_False))) node_out = "false";
+    else if(py::str(value).is(py::str(Py_True)))  node_out = YAML::Load("true");
+    else if(py::str(value).is(py::str(Py_False))) node_out = YAML::Load("false");
     else if(py::isinstance<py::int_>(value))      node_out = info_cast<int>(value,err); 
     else if(py::isinstance<py::float_>(value))    node_out = info_cast<double>(value,err);
     else if(py::isinstance<py::str>(value))       node_out = info_cast<std::string>(value,err);

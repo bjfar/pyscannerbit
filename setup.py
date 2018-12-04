@@ -105,7 +105,7 @@ class CMakeBuild(build_ext_orig):
         subprocess.check_call(['tar','-C','pyscannerbit/scannerbit/untar/ScannerBit','-xf','pyscannerbit/scannerbit/ScannerBit_stripped.tar','--strip-components=1'], cwd=ext.sourcedir, env=env)
       
         # First cmake
-        subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=str(build_temp), env=env)
+        subprocess.check_call(['cmake', '-Ditch=Mathematica', ext.sourcedir] + cmake_args, cwd=str(build_temp), env=env)
         # Build all the scanners
         subprocess.check_call(['cmake', '--build', '.', '--target', 'scanners'] + build_args, cwd=str(build_temp))
         # Re-run cmake to detect built scanner plugins
@@ -117,7 +117,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.13',
+    version='0.0.14',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
@@ -127,6 +127,14 @@ setup(
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     packages=['pyscannerbit'],
+    install_requires=[
+        'pyyaml',
+        'h5py',
+        'mpi4py',
+        'numpy',
+        'scipy',
+        'matplotlib',
+    ],
 )
 
 # No 'package_data' stuff. We just need to get CMake to put everything into 'tmpdir' and it should get copied.
