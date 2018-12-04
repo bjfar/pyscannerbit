@@ -3,4 +3,5 @@
 	url = https://github.com/pybind/pybind11.git
 [submodule "yaml-cpp"]
 	path = yaml-cpp
-	url = https://github.com/jbeder/yaml-cpp.git
+    #url = https://github.com/jbeder/yaml-cpp.git
+    url = https://github.com/bjfar/yaml-cpp.git
