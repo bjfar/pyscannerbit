@@ -52,7 +52,7 @@ class HDF5(h5py.Group):
         self.loglike = loglike
         self.posterior = posterior
         self.h5file = h5file
-        super().__init__(group)
+        super(HDF5,self).__init__(group)
         self.model = model if model else self.get_model_name()
 
     @classmethod

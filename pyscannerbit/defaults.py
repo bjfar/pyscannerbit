@@ -4,7 +4,7 @@ _default_options = {
   "options": {
     "output_file": "results.hdf5",
     "group": "/",
-    "delete_file_on_restart": True,
+    "delete_file_on_restart": "true",
     }
   },
 "Scanner": {
