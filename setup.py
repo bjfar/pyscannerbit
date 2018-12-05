@@ -68,6 +68,7 @@ class CMakeBuild(build_ext_orig):
                  #    '-DPYBIND11_PYTHON_VERSION=3.6',
                  #]
 
+        self.debug = True
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
 
@@ -117,7 +118,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.14',
+    version='0.0.15',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
