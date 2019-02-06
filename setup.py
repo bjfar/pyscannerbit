@@ -28,16 +28,6 @@ class CMakeBuild(build_ext_orig):
         except OSError:
             raise RuntimeError("CMake must be installed to build the following extensions: " +
                                ", ".join(e.name for e in self.extensions))
-        try:
-            try:
-              raise ValueError
-            except ValueError as err:
-               err.extra_info = "hello"
-               raise 
-        except ValueError as e:
-            print(" error was "+ str(type(e))+str(e))
-            if 'extra_info' in dir(e):
-               print e.extra_info 
 
         if platform.system() == "Windows":
             raise RuntimeError("Sorry, pyScannerBit doesn't work on Windows platforms. Please use Linux or OSX.")
