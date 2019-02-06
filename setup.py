@@ -5,7 +5,11 @@ import sysconfig
 import site
 import platform
 import subprocess
-import pathlib
+try:
+    import pathlib
+except ImportError:
+    raise ImportError("pyScannerBit requires the 'pathlib' package for installation. Please install it and try again.")
+
 import multiprocessing
 
 from distutils.version import LooseVersion
@@ -23,7 +27,18 @@ class CMakeBuild(build_ext_orig):
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
             raise RuntimeError("CMake must be installed to build the following extensions: " +
-                               ", ".join(e.name for e in self.extensions))
+                               ", ".join(e.name for e in self.extensions)+"\n"+
+                               )
+        try:
+            try:
+              raise ValueError
+            except ValueError as err:
+               err.extra_info = "hello"
+               raise 
+        except ValueError as e:
+            print(" error was "+ str(type(e))+str(e))
+            if 'extra_info' in dir(e):
+               print e.extra_info 
 
         if platform.system() == "Windows":
             raise RuntimeError("Sorry, pyScannerBit doesn't work on Windows platforms. Please use Linux or OSX.")
@@ -53,13 +68,21 @@ class CMakeBuild(build_ext_orig):
         #quit()
         libout = str(extdir.parent.absolute()) + '/pyscannerbit'
 
+        # Set "ORIGIN" variable depending on OS
+        if    platform.system() == "Linux":
+            origin = r"$ORIGIN"
+        elif  platform.system() == "Darwin": 
+            # This is any OSX-like system
+            origin = r"@loader_path"
+        else:
+            raise RuntimeError("Unrecognised operating system! pyScannerBit is only compatible with Linux and OSX-like operating systems! Aborting install...")
+
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + libout,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
                       '-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF',
                       '-Wno-dev',
                       '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=' + libout,
                       '-DSCANNERBIT_STANDALONE=True',
-                      '-DCMAKE_INSTALL_RPATH=$ORIGIN',
+                      '-DCMAKE_INSTALL_RPATH={0}'.format(origin),
                       '-DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON',
                       '-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON',
                       '-DCMAKE_INSTALL_PREFIX:PATH=' + libout,
@@ -68,6 +91,9 @@ class CMakeBuild(build_ext_orig):
                  #    '-DPYBIND11_PYTHON_VERSION=3.6',
                  #]
 
+        if sys.version_info[0] < 3:
+            cmake_args += ['-DFORCE_PYTHON2=True']
+
         self.debug = True
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -75,7 +101,8 @@ class CMakeBuild(build_ext_orig):
         ncpus = multiprocessing.cpu_count()
         if ncpus>1:
            ncpus -= 1 # Use 1 fewer cpus than available, so the OS can still do other things
-        
+       
+        # We don't work with Windows so I should probably just delete this...
         if platform.system() == "Windows":
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
             if sys.maxsize > 2**32:
@@ -118,7 +145,7 @@ class CMakeBuild(build_ext_orig):
 
 setup(
     name='pyscannerbit',
-    version='0.0.15',
+    version='0.0.24',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
@@ -129,6 +156,7 @@ setup(
     zip_safe=False,
     packages=['pyscannerbit'],
     install_requires=[
+        'six',
         'pyyaml',
         'h5py',
         'mpi4py',
@@ -136,6 +164,9 @@ setup(
         'scipy',
         'matplotlib',
     ],
+    extras_require = {
+        'sqlite3printer':  ["sqlite3"]
+    }
 )
 
 # No 'package_data' stuff. We just need to get CMake to put everything into 'tmpdir' and it should get copied.

@@ -17,6 +17,7 @@
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 #include "gambit/ScannerBit/ScannerBit_CAPI.h"
 
 namespace py = pybind11;
@@ -27,6 +28,33 @@ void py_hello_world()
    //hello_world();
    std::cout << "hello!" <<std::endl;
 } 
+
+/*
+// Derived class to deal with wrapping user-supplied Python functions
+// for prior transformations
+class PythonUserFunc: Gambit::Priors::UserFunc
+{
+    py::object user_pyfunc;
+
+    PythonUserFunc(const std::vector<std::string> pars, const py::object& func) 
+        : Gambit::Priors::UserFunc(pars)
+        , user_pyfunc(func)
+    {}
+   
+    std::vector<double> transform(const std::vector<double>& params) const
+    {
+        // Test
+        //std::vector<double> test_vec{1,2,3,4,5};
+        //py::array test_array2(test_vec.size(), test_vec.data());
+        //py::list args = test_array2.cast<py::list>();
+
+        // Call user-defined Python likelihood function and convert result to a vector of doubles
+        // py::list args = params;
+        // .cast<py::tuple>() ???
+        return user_pyfunc(py::cast(params)); // Should unpack the vector into the python function arguments
+    }
+};
+*/
 
 // Should probably encapsulate this into an object or something
 py::object user_pyfunc; // Global variable defining the users chosen Python likelihood function
@@ -227,7 +255,7 @@ YAML::Node pydict_to_yaml(const py::dict& d, const std::string& dict_level = "/"
     return node_out;
 }
 
-void py_run_scan(const py::dict& d, const py::object& f)
+void py_run_scan(const py::dict& d, const py::object& f )//, const py::dict& priors)
 {
    // Set user-defined Python function for callbacks
    user_pyfunc = f;   
@@ -242,9 +270,29 @@ void py_run_scan(const py::dict& d, const py::object& f)
    YAML::Node root = pydict_to_yaml(d);  
 
    // Check what we have cooked up here
-   std::cout << "Constructed YAML node:" << std::endl;
-   std::cout << root << std::endl;
+   //std::cout << "Constructed YAML node:" << std::endl;
+   //std::cout << root << std::endl;
 
+   // Construct special manager object for user-defined prior transform functions
+   // The user should have supplied a Python dictionary from parameters to
+   // transform functions
+  
+   // // Persistent storage of UserFunc objects 
+   // std::map<std::vector<std::string>, PythonUserFunc> userfuncs;
+
+   // // Base class access to UserFunc objects
+   // std::map<std::vector<std::string>, UserFunc*> baseuserfuncs;
+
+   // for(auto it=priors.begin(); it!=priors.end(); ++it)
+   // {
+   //    std::vector<std::string> params = it->first;
+   //    userfuncs.emplace(params, PythonUserFunc(params, it->second);
+   //    baseuserfuncs.emplace(params, &userfuncs[params]);
+   // }
+
+   // Gambit::Priors::UserFuncPriorManager(baseuserfuncs) prior_funcs;
+   //Gambit::Priors::UserFuncPriorManager prior_funcs; // Null argument for testing
+  
    // Call library function
    run_scan(root,&wrapper_func,false); // Last argument tells ScannerBit not to INIT_MPI. Will be done in Python.
 }

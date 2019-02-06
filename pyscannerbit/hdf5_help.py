@@ -131,3 +131,11 @@ class HDF5(h5py.Group):
         data = np.vstack((x,y,-2*logl)).T
         pt.profplot(ax,data,title=None,labels=[xpar,ypar],nxbins=nxbins,nybins=nybins)
 
+    def plot_marginal_posterior(self,ax,xpar,ypar,use_default_model_name=True,nxbins=100,nybins=100):
+        if(use_default_model_name):
+           xpar = "{0}::{1}".format(self.model,xpar)
+           ypar = "{0}::{1}".format(self.model,ypar)
+        p,x,y = get_data(self,[self.posterior,xpar,ypar])
+        data = np.vstack((x,y,p)).T
+        pt.margplot(ax,data,title=None,labels=[xpar,ypar],nxbins=nxbins,nybins=nybins)
+

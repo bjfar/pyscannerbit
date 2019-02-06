@@ -370,13 +370,10 @@ def profplot(ax,data,title=None,labels=None,nybins=100,nxbins=None):
     
     return im
     
-def margplot(ax,data,title=None,labels=None):
+def margplot(ax,data,nxbins=100,nybins=100,title=None,labels=None):
     """Creates a binned marginalised plot of the data, colored by marginalised posterior
     density.
     """
-    nxbins=np.floor(1.618*100)
-    nybins=100
-
     x = data[:,0]
     y = data[:,1]
     wx= (max(x)-min(x))/nxbins
@@ -388,7 +385,7 @@ def margplot(ax,data,title=None,labels=None):
     X, Y = np.meshgrid(xlist,ylist)
     maxpoint = max(outarraydens.flat)
 
-    print(X.shape, Y.shape, outarraydens.shape, outarrayconts.shape, max(outarrayconts.flat))
+    #print(X.shape, Y.shape, outarraydens.shape, outarrayconts.shape, max(outarrayconts.flat))
     
     im = ax.imshow(outarraydens, origin='lower', interpolation='nearest',
                     extent=(min(xlist),max(xlist)+wx,min(ylist),max(ylist)+wy),

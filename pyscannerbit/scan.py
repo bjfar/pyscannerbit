@@ -19,16 +19,14 @@ from mpi4py import MPI
 # Need to tell ScannerBit where its config files are located
 # We do this via a special environment variable
 gambit_path = os.path.dirname(__file__)
-print("Setting GAMBIT_RUN_DIR to:",gambit_path)
+#print("Setting GAMBIT_RUN_DIR to:",gambit_path)
 os.environ["GAMBIT_RUN_DIR"] = gambit_path
-
-# Import functions from the pybind11-created interface to ScannerBitCAPI
-from ._interface import hello, run_scan
 
 # Other python helper tools
 from .defaults import _default_options
 from .utils import _merge
 from .hdf5_help import get_data, HDF5 
+from .processify import processify
 
 def _add_default_options(options):
    """Inspect user-supplied options, and fill in any missing
@@ -36,29 +34,61 @@ def _add_default_options(options):
    _merge(options,_default_options)
    return options
 
+@processify
+def _run_scan(settings, function):
+   """Perform a scan. This function is decorated in such a 
+      way that it runs in a new process. This is important
+      because the GAMBIT plugins can only run once per
+      process, because the shared libraries need to be reloaded
+      to perform a second scan.
+      """
+   # Import functions from the pybind11-created interface to ScannerBitCAPI
+   # Should also trigger the loading of the scanner plugin libraries, which
+   # needs to happen in the subprocess
+   from ._interface import run_scan
+   run_scan(settings, function)
+
+
 class Scan:
     """Helper object for setting up and running a scan, and
        making some basic plots.
     """
-    def __init__(self, function, bounds, prior_types, kwargs=None, scanner=None,
-      settings={}, model_name=None, output_path=None):
+    def __init__(self, function, bounds=None, prior_types=None, kwargs=None, scanner=None,
+      settings={}, model_name=None, output_path=None, fargs=None):
         """
+        function - Python function to be scanned
+        bounds - list of ranges of parameter values (function arguments) to scan,
+                 or mean/std-dev in case of normal prior.
+        prior_types - list of priors to use for scanning in each dimension (e.g. flat/log).
+                      If None then the user is expected to do the inverse transform from
+                      a unit hypercube to their parameter space themselves.
+        scanner - Scanning algorithm to use
+        f_args - List of names of function argments to use (if None these are
+         inferred from the signature of 'function')
         """
         self.function = function
-        self.bounds = bounds # or mean/std-dev in case of normal prior
-        self.prior_types = prior_types if prior_types else ["flat"] * len(bounds)
+
+        # Determine parameter names, either automatically or from 'fargs' argument
+        if fargs is None:
+            signature = inspect.getargspec(self.function)
+            n_kwargs = len(signature.defaults or [])
+            self._argument_names = signature.args[:-n_kwargs or None]
+        else:
+            n_kwargs = len(fargs)
+            self._argument_names = fargs
+
+        # Determine prior to be used
+        self.bounds = bounds if bounds else [(0,1)] * len(self._argument_names)
+        self.prior_types = prior_types if prior_types else ["flat"] * len(self._argument_names)
         self.scanner = scanner
         self.settings = _add_default_options(copy.deepcopy(settings))
         self.kwargs = kwargs
 
-        signature = inspect.getargspec(self.function)
-        n_kwargs = len(signature.defaults or [])
-        self._argument_names = signature.args[:-n_kwargs or None]
         assert len(self._argument_names) == len(self.bounds)
  
         if model_name is None:
            if "Parameters" in self.settings:
-              print(self.settings["Parameters"])
+              #print(self.settings["Parameters"])
               self._model_name = list(self.settings["Parameters"].keys())[0]
            else:
               self._model_name = "default"
@@ -101,7 +131,7 @@ class Scan:
         if("Parameters" not in self.settings):
             self.settings["Parameters"] = dict()
             self.settings["Parameters"][self._model_name] = dict()
-            for n, in self._argument_names:
+            for n in self._argument_names:
                 # Just add parameter names. We will write the prior settings out fully
                 # in the Priors section next
                 self.settings["Parameters"][self._model_name][n] = None
@@ -119,7 +149,7 @@ class Scan:
                     self.settings["Priors"]["{0}_prior".format(n)] = prior_setup
             else:
                 raise ValueError("No prior settings found! These need to be either supplied in simplified form via the 'bounds' and 'prior_types' arguments, or else supplied in long form (following the GAMBIT YAML format) in the 'settings' dictionary under the 'Priors' key (or under the 'Parameters' key in the short-cut format)")
-        print(self.settings)
+        #print(self.settings)
 
     def _wrap_function(self):
         """
@@ -136,10 +166,10 @@ class Scan:
     def scan(self):
         """Run a scan with ScannerBit
         """
-        run_scan(self.settings, self._wrapped_function)
+        _run_scan(self.settings, self._wrapped_function)
         MPI.COMM_WORLD.Barrier()
         rank = MPI.COMM_WORLD.Get_rank()
-        print("Rank {0} passed scan end barrier!".format(rank))
+        #print("Rank {0} passed scan end barrier!".format(rank))
         self._scanned = True
 
     def get_hdf5(self):

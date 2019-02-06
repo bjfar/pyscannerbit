@@ -8,7 +8,7 @@ GAMBIT_DIR=$1
 
 echo "Grabbing ScannerBit tarball from $1/build..."
 mkdir pyscannerbit/scannerbit/ScannerBit_TEMP_dir
-tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf $GAMBIT_DIR/build/ScannerBit-1.1.3.tar --strip-components=1 
+tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf $GAMBIT_DIR/build/ScannerBit-1.2.1.tar --strip-components=1 
 
 CONTRIB_DIR=pyscannerbit/scannerbit/ScannerBit_TEMP_dir/contrib/
 

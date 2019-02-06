@@ -29,24 +29,39 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # # Some stuff to make sure same version of python is used for this interface
 # # and while building ScannerBit
-# find_package(PythonInterp 3)
-# if(PythonInterp_FOUND)
-#    find_package(PythonLibs 3 REQUIRED)
-# else()
-#     message("${BoldYellow}   Python 3 not found, searching for Python 2.7${ColourReset}")
-#     find_package(PythonInterp 2 REQUIRED)
-#     if (PYTHON_VERSION_MAJOR GREATER 2 OR PYTHON_VERSION_MINOR LESS 7)
-#       message(FATAL_ERROR "\nGAMBIT requires Python 2.7 or greater.  \nIf you need to set the path to the Python interpreter manually, "
-#                           "please use -DPYTHON_EXECUTABLE:FILEPATH=path/to/preferred/python.")
-#     endif()
-#     find_package(PythonLibs 2 REQUIRED)
-# endif()
+# Check for Python interpreter
+# We also need to search for PythonLibs before letting pybind11 look for them,
+# otherwise it seems to get it wrong.  Also, we need to add versions of python
+# greater than 3.3 manually, for compatibility with CMake 2.8.12.
+set(Python_ADDITIONAL_VERSIONS 3.4 3.5 3.6 3.7)
+if (FORCE_PYTHON2)
+  message("${BoldYellow}   Python 2 requested; searching for Python 2.7${ColourReset}")
+  find_package(PythonInterp 2.7 REQUIRED)
+  find_package(PythonLibs ${PYTHON_VERSION_STRING} EXACT)
+elseif (FORCE_PYTHON3)
+  message("${BoldYellow}   Python 3 requested; searching for Python 3.x${ColourReset}")
+  find_package(PythonInterp 3 REQUIRED)
+  find_package(PythonLibs ${PYTHON_VERSION_STRING} EXACT)
+else()
+  find_package(PythonInterp 3)
+  if(PYTHONINTERP_FOUND)
+    find_package(PythonLibs 3)
+  else()
+    message("${BoldYellow}   Python 3 not found, searching for Python 2.7${ColourReset}")
+    find_package(PythonInterp 2 REQUIRED)
+    if (PYTHON_VERSION_MINOR LESS 7)
+      message(FATAL_ERROR "\nGAMBIT requires Python 2.7.  \nIf you need to set the path to the Python interpreter manually, "
+                          "please use -DPYTHON_EXECUTABLE:FILEPATH=path/to/preferred/python.")
+    endif()
+    find_package(PythonLibs 2)
+  endif()
+endif()
 
 # Search for pybind11 and yaml-cpp installations
 # If not found, use versions supplied with this package
 # (TODO: Should probably add some version restrictions)
 if(NOT USE_PYSB_YAML)
-   find_package(yaml-cpp)
+   find_package(yaml-cpp QUIET)
 endif()
 
 if(yaml-cpp_FOUND)
@@ -63,7 +78,7 @@ else()
    set(USE_PYSB_YAML TRUE CACHE BOOL "Flag to skip find_package(yaml-cpp) and just use supplied version") # Store in cache so that we can avoid running find_package in later cmake runs (seems to spuriously 'find' yaml-cpp when it shouldn't, maybe due to cached targets imported via the add_subdirectory command? Not sure if CMake works like that or not)
 endif()
 
-find_package(pybind11)
+find_package(pybind11 QUIET)
 if(pybind11_FOUND)
    message("   Found pybind11 installation on system")
 else()
@@ -140,8 +155,8 @@ set(POLYCHORD_VERSION 1.15)
 set(DIVER_VERSION 1.0.4)
 
 # Multinest
-copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/MultiNest_v${MULTINEST_VERSION}/libnest3.so
-          ${GAMBIT_RUN_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/MultiNest_v${MULTINEST_VERSION})
+copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/libnest3.so
+          ${GAMBIT_RUN_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION})
 
 # Polychord
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib/libchord.so
