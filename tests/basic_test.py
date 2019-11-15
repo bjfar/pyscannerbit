@@ -1,54 +1,64 @@
-# --- pyscannerbit import
-import sys
-import ctypes
-flags = sys.getdlopenflags()
-sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
 import pyscannerbit.scan as sb
-
-# ---
+import pyscannerbit.defaults as defaults
+import matplotlib.pyplot as plt
+import copy
 
 # Test function
-def test(pars):
-  x = pars["test_model::x"]
-  y = pars["test_model::y"]
-  z = pars["test_model::z"]
-  #print "pars: ", x, y, z
-  
+def test_logl(x,y,z):
+  #scan.print("x+y+z",x+y+z) # Save custom entry to output data
   return -0.5*( (x-10)**2 + (y-15)**2 + (z+3)**2 ) # fitness function to maximise (log-likelihood)
 
-# Scan setup
-pars = {"test_model": {
-         "x": 20,
-         "y": {"range": [0, 5]},
-         "z": {"range": [0, 5]},
-        }
-       } 
+# Prior function; seems not to be optional like it should be.
+def prior(vec, map):
+  return map
 
-setup = { "Parameters": pars }
+# Override some scanner settings
+# Easier to take the defaults and replace stuff rather than building from scratch
+# (although if you do build it from scratch the defaults will be used to fill in
+#  any gaps you leave)
+settings = copy.deepcopy(defaults._default_options)
+#settings["Scanner"]["scanners"]["multinest"] = {"tol": 0.5, "nlive": 500} # Configured for quick and dirty scan 
+# Currently cannot use external scanners due to rpath issues. Use internal ones only for now.
+#settings["Scanner"]["scanners"]["twalk"] = {"sqrtR": 1.05}
+#settings["Scanner"]["scanners"]["random"] = {"point_number": 100}
+settings["Scanner"]["scanners"]["toy_mcmc"] = {"point_number": 10}
 
-# Bit ugly, but only other choice is to just use a YAML file I think.
-# Or could do it with a sequence of setup calls? E.g.
-# sb.setup_printer("hdf5",output_file="pyresults.hdf5",group="/pyspartan",delete_file_on_restart=True)
-# sb.setup_scanner("multinest",nlive=1000,tol=0.1)
 
-# Maybe with some kind of helper class? Which we pack/unpack using the above functions? Then it
-# can be re-used and passed around a bit more conveniently
+# Create scan manager object
+myscan = sb.Scan(test_logl, bounds=[[1., 40.]] * 3, prior_types=["flat", "flat", "log"], prior_func=prior, scanner="toy_mcmc", settings=settings)
+print(myscan)
+myscan.scan()
 
-# class ScannerBitSetup:
-#     def __init__(self):
-#         printer_options = None
-#         scanner_options = None
-# 
-#     def setup_printer(self,name,**args):
-#         printer_options = {"printer": name, "options": args}
-# 
-#     def setup_scanner(self,name,**args):
-#         scanner_options = {"use_scanner": name, name: args}
+# Retrieve h5py group object, augmented with some helpful routines
+hdf5 = myscan.get_hdf5()
 
-# Ok I think that is nicest. But fundamentally, on the C++ side,
-# we just have to parse the nested Python dictionaries. We can
-# make it nicer on the Python side in various ways.
+# Variable names always match the ones used in "loglike"
+print(hdf5.get_param_names())
 
-sb.py_run_scan(setup,test)
+# Best-fit parameters
+print(hdf5.get_best_fit("x"))
+print(hdf5.get_best_fit("y"))
+print(hdf5.get_best_fit("z"))
+print(hdf5.get_min_chi_squared())
 
+# np.array of parameter
+print(hdf5.get_param("z"))
+print(hdf5.get_loglike())
+
+# Plot pairs of parameters
+hdf5.make_plot("x", "y")
+hdf5.make_plot("x", "LogLike")
+
+# Plot profile likelihood (requires an axis)
+fig = plt.figure(figsize=(12,4))
+ax = fig.add_subplot(121)
+hdf5.plot_profile_likelihood(ax,"x","y")
+ax = fig.add_subplot(122)
+hdf5.plot_profile_likelihood(ax,"x","z")
+plt.tight_layout()
+fig.savefig("scan_object_test_logl.png")
+
+# This is still an HDF5-like object (with the root being the group containing the datasets for this scan) 
+# e.g., you can do
+print(hdf5["default::x"])
 

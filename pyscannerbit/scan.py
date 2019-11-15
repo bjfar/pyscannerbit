@@ -8,6 +8,7 @@ import ctypes
 flags = sys.getdlopenflags()
 sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
 
+from functools import partial
 import inspect
 import copy
 import h5py
@@ -19,7 +20,7 @@ from mpi4py import MPI
 # Need to tell ScannerBit where its config files are located
 # We do this via a special environment variable
 gambit_path = os.path.dirname(__file__)
-#print("Setting GAMBIT_RUN_DIR to:",gambit_path)
+print("Setting GAMBIT_RUN_DIR to:",gambit_path)
 os.environ["GAMBIT_RUN_DIR"] = gambit_path
 
 # Other python helper tools
@@ -35,28 +36,36 @@ def _add_default_options(options):
    return options
 
 @processify
-def _run_scan(settings, function):
+def _run_scan(settings, loglike_func, prior_func):
    """Perform a scan. This function is decorated in such a 
       way that it runs in a new process. This is important
       because the GAMBIT plugins can only run once per
       process, because the shared libraries need to be reloaded
       to perform a second scan.
       """
-   # Import functions from the pybind11-created interface to ScannerBitCAPI
-   # Should also trigger the loading of the scanner plugin libraries, which
-   # needs to happen in the subprocess
-   from ._interface import run_scan
-   run_scan(settings, function)
+   # Import functions from the ScannerBit.so library
+   # Should also trigger the loading of the scanner plugin libraries
+   from .ScannerBit.python import ScannerBit
 
+   # Attach the ScannerBit object to the first argument of the wrapped likelihood function
+   wrapped_loglike = partial(loglike_func,ScannerBit)
 
+   # Create scan object
+   myscan = ScannerBit.scan(True)
+       
+   # run scan
+   # 'inifile' can be the name of a YAML file, or a dict.
+   myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=prior_func, restart=True)
+ 
 class Scan:
     """Helper object for setting up and running a scan, and
        making some basic plots.
     """
-    def __init__(self, function, bounds=None, prior_types=None, kwargs=None, scanner=None,
+    def __init__(self, function, prior_func=None, bounds=None, prior_types=None, kwargs=None, scanner=None,
       settings={}, model_name=None, output_path=None, fargs=None):
         """
         function - Python function to be scanned
+        prior_func - User-define prior transformation function (optional)
         bounds - list of ranges of parameter values (function arguments) to scan,
                  or mean/std-dev in case of normal prior.
         prior_types - list of priors to use for scanning in each dimension (e.g. flat/log).
@@ -67,14 +76,15 @@ class Scan:
          inferred from the signature of 'function')
         """
         self.function = function
+        self.prior_func = prior_func
+        self.ScannerBit = None # To contain ScannerBit interface module when run begins
 
         # Determine parameter names, either automatically or from 'fargs' argument
         if fargs is None:
             signature = inspect.getargspec(self.function)
-            n_kwargs = len(signature.defaults or [])
-            self._argument_names = signature.args[:-n_kwargs or None]
+            # First argument needs to be the 'scan' object, to allow access to printers etc. Skip it in determination of parameter names.
+            self._argument_names = signature.args[1:]
         else:
-            n_kwargs = len(fargs)
             self._argument_names = fargs
 
         # Determine prior to be used
@@ -84,6 +94,8 @@ class Scan:
         self.settings = _add_default_options(copy.deepcopy(settings))
         self.kwargs = kwargs
 
+        print(self._argument_names)
+        print(self.bounds)
         assert len(self._argument_names) == len(self.bounds)
  
         if model_name is None:
@@ -159,18 +171,24 @@ class Scan:
             """
             arguments = [par_dict["{}::{}".format(self._model_name, n)]
               for n in self._argument_names]
-            return self.function(*arguments, **(self.kwargs or {}))
+            return self.function(self.scan, *arguments, **(self.kwargs or {}))
 
         return wrapped_function
 
     def scan(self):
-        """Run a scan with ScannerBit
-        """
-        _run_scan(self.settings, self._wrapped_function)
-        MPI.COMM_WORLD.Barrier()
-        rank = MPI.COMM_WORLD.Get_rank()
-        #print("Rank {0} passed scan end barrier!".format(rank))
-        self._scanned = True
+       """Perform a scan. This runs a function that is decorated in such a 
+       way that it runs in a new process. This is important
+       because the GAMBIT plugins can only run once per
+       process, because the shared libraries need to be reloaded
+       to perform a second scan.
+
+       Downside is that all arguments must be pickle-able.
+       """
+       _run_scan(self.settings, self._wrap_function, self.prior_func)
+       MPI.COMM_WORLD.Barrier()
+       rank = MPI.COMM_WORLD.Get_rank()
+       print("Rank {0} passed scan end barrier!".format(rank))
+       self._scanned = True
 
     def get_hdf5(self):
         try:

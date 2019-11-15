@@ -91,15 +91,8 @@ class CMakeBuild(build_ext_orig):
         if ncpus>1:
            ncpus -= 1 # Use 1 fewer cpus than available, so the OS can still do other things
        
-        # We don't work with Windows so I should probably just delete this...
-        if platform.system() == "Windows":
-            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
-            if sys.maxsize > 2**32:
-                cmake_args += ['-A', 'x64']
-            build_args += ['--', '/m']
-        else:
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            build_args += ['--', '-j{0}'.format(ncpus)]
+        cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+        build_args += ['--', '-j{0}'.format(ncpus)]
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -107,16 +100,16 @@ class CMakeBuild(build_ext_orig):
        
         # # Debugging paths
         # print("Debugging paths:")
-        # print("extdir:",extdir)
+        print("extdir:",extdir)
         print("libout:",libout)
-        # subprocess.check_call(['pwd'], cwd=self.build_temp, env=env)
-        # subprocess.check_call(['echo',self.build_temp], cwd=self.build_temp, env=env)
+        subprocess.check_call(['pwd'], cwd=self.build_temp, env=env)
+        subprocess.check_call(['echo',self.build_temp], cwd=self.build_temp, env=env)
         # # cwd = pathlib.Path().absolute()
         # # print("ext.sourcedir:")
         # # subprocess.check_call(['echo', ext.sourcedir], cwd=self.build_temp, env=env)
         # # subprocess.check_call(['echo',cwd], cwd=self.build_temp, env=env) 
-        # subprocess.check_call(['ls', ext.sourcedir], cwd=self.build_temp, env=env)
-        # subprocess.check_call(['ls', ext.sourcedir+'/pyscannerbit/scannerbit'], cwd=self.build_temp, env=env)
+        subprocess.check_call(['ls', ext.sourcedir], cwd=self.build_temp, env=env)
+        subprocess.check_call(['ls', ext.sourcedir+'/pyscannerbit/scannerbit'], cwd=self.build_temp, env=env)
    
         # untar ScannerBit tarball
         subprocess.check_call(['tar','-C','pyscannerbit/scannerbit/untar/ScannerBit','-xf','pyscannerbit/scannerbit/ScannerBit_stripped.tar','--strip-components=1'], cwd=ext.sourcedir, env=env)
@@ -128,19 +121,28 @@ class CMakeBuild(build_ext_orig):
         # Re-run cmake to detect built scanner plugins
         subprocess.check_call(['cmake', ext.sourcedir], cwd=str(build_temp))
         # Main build
-        subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=str(build_temp))
+        subprocess.check_call(['cmake', '--build', '.', '--target', 'post_build'] + build_args, cwd=str(build_temp))
         # Install
         #subprocess.check_call(['cmake', '--build', '.', '--target', 'install'], cwd=str(build_temp))
 
+        # We need to add some __init__.py files to the package
+        f=open("{0}/ScannerBit/__init__.py".format(libout),"w+")
+        f.close()
+        f=open("{0}/ScannerBit/python/__init__.py".format(libout),"w+")
+        f.close()
+
+        print("Checking contents of temporary directory {0}".format(libout))
+        print(subprocess.check_call(['ls', libout], cwd=self.build_temp, env=env))
+ 
 setup(
     name='pyscannerbit',
-    version='0.0.24',
+    version='0.0.26',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
     description='A python interface to the GAMBIT scanning module, ScannerBit',
     long_description='',
-    ext_modules=[CMakeExtension('_interface')],
+    ext_modules=[CMakeExtension('_gambit')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
     packages=['pyscannerbit'],

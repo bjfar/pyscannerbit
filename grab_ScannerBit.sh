@@ -8,7 +8,7 @@ GAMBIT_DIR=$1
 
 echo "Grabbing ScannerBit tarball from $1/build..."
 mkdir pyscannerbit/scannerbit/ScannerBit_TEMP_dir
-tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf $GAMBIT_DIR/build/ScannerBit-1.2.1.tar --strip-components=1 
+tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf $GAMBIT_DIR/build/ScannerBit-1.4.0.tar --strip-components=1 
 
 CONTRIB_DIR=pyscannerbit/scannerbit/ScannerBit_TEMP_dir/contrib/
 
@@ -19,11 +19,11 @@ rm -rf $CONTRIB_DIR/mcutils
 rm -rf $CONTRIB_DIR/pybind11      
 rm -rf $CONTRIB_DIR/RestFrames*        
 rm -rf $CONTRIB_DIR/slhaea
-rm -rf $CONTRIB_DIR/fjcore*   
+# rm -rf $CONTRIB_DIR/fjcore*   
 rm -rf $CONTRIB_DIR/MassSpectra  
 rm -rf $CONTRIB_DIR/pyscannerbit  
 rm -rf $CONTRIB_DIR/restframes*.tar.gz  
-rm -rf $CONTRIB_DIR/yaml-cpp*
+# rm -rf $CONTRIB_DIR/yaml-cpp*
 
 echo "Recreating tarball..."
 rm pyscannerbit/scannerbit/ScannerBit_stripped.tar
