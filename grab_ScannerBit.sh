@@ -10,13 +10,15 @@ echo "Grabbing ScannerBit tarball from $1/build..."
 mkdir pyscannerbit/scannerbit/ScannerBit_TEMP_dir
 tar -C pyscannerbit/scannerbit/ScannerBit_TEMP_dir -xf $GAMBIT_DIR/build/ScannerBit-1.4.0.tar --strip-components=1 
 
-CONTRIB_DIR=pyscannerbit/scannerbit/ScannerBit_TEMP_dir/contrib/
+ROOT_DIR=pyscannerbit/scannerbit/ScannerBit_TEMP_dir
+CONTRIB_DIR=$ROOT_DIR/contrib/
 
 echo "Stripping unnecessary contrib packages..."
 rm -rf $CONTRIB_DIR/Delphes*  
 rm -rf $CONTRIB_DIR/heputils     
 rm -rf $CONTRIB_DIR/mcutils  
 rm -rf $CONTRIB_DIR/pybind11      
+rm -rf $CONTRIB_DIR/pybind11_old
 rm -rf $CONTRIB_DIR/RestFrames*        
 rm -rf $CONTRIB_DIR/slhaea
 # rm -rf $CONTRIB_DIR/fjcore*   
@@ -24,6 +26,15 @@ rm -rf $CONTRIB_DIR/MassSpectra
 rm -rf $CONTRIB_DIR/pyscannerbit  
 rm -rf $CONTRIB_DIR/restframes*.tar.gz  
 # rm -rf $CONTRIB_DIR/yaml-cpp*
+rm -rf $CONTRIB_DIR/yaml-cpp-0.6.2/build
+rm -rf $CONTRIB_DIR/yaml-cpp-0.6.2/test
+rm -rf $ROOT_DIR/ScannerBit/python/contrib/boost_python
+rm -rf $ROOT_DIR/ScannerBit/python/pyscannerbit_run_data
+rm -rf $ROOT_DIR/ScannerBit/python/runs
+# Remove temporary files from vim etc.
+echo "Stripping temporary files..."
+find $ROOT_DIR -name \*.cpp.sw* -exec rm {} +
+find $ROOT_DIR -name \*.hpp.sw* -exec rm {} +
 
 echo "Recreating tarball..."
 rm pyscannerbit/scannerbit/ScannerBit_stripped.tar
