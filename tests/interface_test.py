@@ -1,7 +1,5 @@
-import os
 import sys
 import ctypes
-import yaml
 
 flags = sys.getdlopenflags()
 sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
@@ -76,12 +74,20 @@ settings = {
   }
 }
 
-#myscan.run(inifile=settings, lnlike={"LogLike": like}, prior=prior, restart=True)
+myscan.run(inifile=settings, lnlike={"LogLike": like}, prior=prior, restart=True)
 
 # Try via wrapper to the above interface:
 #sb._run_scan(settings, like2, prior)
 
 #Try without prior
-sb._run_scan(settings, like2, "")
+#sb._run_scan(settings, like2, "") # Fails!
+
+# Try with dummy prior
+def dummy_prior(vec, map):
+    pass
+ 
+#sb._run_scan(settings, like2, dummy_prior)
+
+
 
 

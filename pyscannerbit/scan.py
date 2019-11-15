@@ -17,6 +17,9 @@ import h5py
 # call 'finalize' upon exit. So we need do nothing except import this.
 from mpi4py import MPI
 
+# DEBUG! Only used to check that YAML options looks reasonable
+import yaml
+
 # Need to tell ScannerBit where its config files are located
 # We do this via a special environment variable
 gambit_path = os.path.dirname(__file__)
@@ -35,7 +38,13 @@ def _add_default_options(options):
    _merge(options,_default_options)
    return options
 
-@processify
+# Better version of 'partial'. From 'funcy' library: https://github.com/Suor/funcy
+def func_partial(func, *args, **kwargs):
+    """A functools.partial alternative, which returns a real function.
+       Can be used to construct methods."""
+    return lambda *a, **kw: func(*(args + a), **dict(kwargs, **kw))
+
+#@processify
 def _run_scan(settings, loglike_func, prior_func):
    """Perform a scan. This function is decorated in such a 
       way that it runs in a new process. This is important
@@ -48,15 +57,16 @@ def _run_scan(settings, loglike_func, prior_func):
    from .ScannerBit.python import ScannerBit
 
    # Attach the ScannerBit object to the first argument of the wrapped likelihood function
-   wrapped_loglike = partial(loglike_func,ScannerBit)
+   #wrapped_loglike = func_partial(loglike_func,scan=ScannerBit)
 
    # Create scan object
    myscan = ScannerBit.scan(True)
        
    # run scan
    # 'inifile' can be the name of a YAML file, or a dict.
-   myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=prior_func, restart=True)
- 
+   #myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=prior_func, restart=True)
+   myscan.run(inifile=settings, lnlike={"LogLike": loglike_func}, prior=prior_func, restart=True)
+
 class Scan:
     """Helper object for setting up and running a scan, and
        making some basic plots.
@@ -83,7 +93,8 @@ class Scan:
         if fargs is None:
             signature = inspect.getargspec(self.function)
             # First argument needs to be the 'scan' object, to allow access to printers etc. Skip it in determination of parameter names.
-            self._argument_names = signature.args[1:]
+            #self._argument_names = signature.args[1:]
+            self._argument_names = signature.args
         else:
             self._argument_names = fargs
 
@@ -94,8 +105,8 @@ class Scan:
         self.settings = _add_default_options(copy.deepcopy(settings))
         self.kwargs = kwargs
 
-        print(self._argument_names)
-        print(self.bounds)
+        print("self._argument_names:", self._argument_names)
+        print("self.bounds:", self.bounds)
         assert len(self._argument_names) == len(self.bounds)
  
         if model_name is None:
@@ -162,6 +173,9 @@ class Scan:
             else:
                 raise ValueError("No prior settings found! These need to be either supplied in simplified form via the 'bounds' and 'prior_types' arguments, or else supplied in long form (following the GAMBIT YAML format) in the 'settings' dictionary under the 'Priors' key (or under the 'Parameters' key in the short-cut format)")
         #print(self.settings)
+        #print("Scan settings:")
+        #print("==============")
+        #print(yaml.dump(self.settings, default_flow_style=False))
 
     def _wrap_function(self):
         """
@@ -169,9 +183,10 @@ class Scan:
         def wrapped_function(par_dict):
             """
             """
+            print("par_dict:", par_dict)
             arguments = [par_dict["{}::{}".format(self._model_name, n)]
               for n in self._argument_names]
-            return self.function(self.scan, *arguments, **(self.kwargs or {}))
+            return self.function(*arguments, **(self.kwargs or {}))
 
         return wrapped_function
 
@@ -184,7 +199,7 @@ class Scan:
 
        Downside is that all arguments must be pickle-able.
        """
-       _run_scan(self.settings, self._wrap_function, self.prior_func)
+       _run_scan(self.settings, self._wrapped_function, self.prior_func)
        MPI.COMM_WORLD.Barrier()
        rank = MPI.COMM_WORLD.Get_rank()
        print("Rank {0} passed scan end barrier!".format(rank))

@@ -45,7 +45,6 @@ _default_options = {
   },
 "KeyValues": {
   "default_output_path": "pyscannerbit_run_data/",
-  "rng": "ranlux48",
   "likelihood": {
     "model_invalid_for_lnlike_below": -1e6
     }
