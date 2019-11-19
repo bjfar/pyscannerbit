@@ -41,6 +41,14 @@ _default_options = {
       "plugin": "toy_mcmc",
       "point_number": 10000,
       },
+    "pso": {
+      "plugin": "jswarm",
+      "like":  "LogLike",
+      "NP": 400,
+      "adaptive_phi": "true",
+      "adaptive_omega": "true",
+      "verbosity": 2,
+      },
     },
   },
 "KeyValues": {
