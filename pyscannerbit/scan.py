@@ -106,7 +106,7 @@ def _run_scan(settings, loglike_func, prior_func):
    print(settings)
    print("==============")
    print(yaml.dump(settings, default_flow_style=False))
-       
+
    # run scan
    # 'inifile' can be the name of a YAML file, or a dict.
    #myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=prior_func, restart=True)
