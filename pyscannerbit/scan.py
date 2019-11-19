@@ -44,7 +44,7 @@ def func_partial(func, *args, **kwargs):
        Can be used to construct methods."""
     return lambda *a, **kw: func(*(args + a), **dict(kwargs, **kw))
 
-#@processify
+@processify # Run this function in a separate process, so that scanner plugins can be re-loaded between scans
 def _run_scan(settings, loglike_func, prior_func):
    """Perform a scan. This function is decorated in such a 
       way that it runs in a new process. This is important
@@ -56,16 +56,29 @@ def _run_scan(settings, loglike_func, prior_func):
    # Should also trigger the loading of the scanner plugin libraries
    from .ScannerBit.python import ScannerBit
 
-   # Attach the ScannerBit object to the first argument of the wrapped likelihood function
-   #wrapped_loglike = func_partial(loglike_func,scan=ScannerBit)
+   print("prior_func:",prior_func)
+   print("prior_func:",inspect.signature(prior_func))
+
+   # Attach the ScannerBit object to the first argument of the wrapped likelihood and prior functions
+   wrapped_loglike = func_partial(loglike_func,ScannerBit)
+   if prior_func is not None:
+       wrapped_prior = func_partial(prior_func,ScannerBit)
+   else:
+       wrapped_prior = None
 
    # Create scan object
    myscan = ScannerBit.scan(True)
+
+   # Double check settings fed to ScannerBit!
+   print("Scan settings:")
+   print(settings)
+   print("==============")
+   print(yaml.dump(settings, default_flow_style=False))
        
    # run scan
    # 'inifile' can be the name of a YAML file, or a dict.
    #myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=prior_func, restart=True)
-   myscan.run(inifile=settings, lnlike={"LogLike": loglike_func}, prior=prior_func, restart=True)
+   myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=wrapped_prior, restart=True)
 
 class Scan:
     """Helper object for setting up and running a scan, and
@@ -87,14 +100,13 @@ class Scan:
         """
         self.function = function
         self.prior_func = prior_func
-        self.ScannerBit = None # To contain ScannerBit interface module when run begins
 
         # Determine parameter names, either automatically or from 'fargs' argument
         if fargs is None:
             signature = inspect.getargspec(self.function)
             # First argument needs to be the 'scan' object, to allow access to printers etc. Skip it in determination of parameter names.
-            #self._argument_names = signature.args[1:]
-            self._argument_names = signature.args
+            self._argument_names = signature.args[1:]
+            #self._argument_names = signature.args
         else:
             self._argument_names = fargs
 
@@ -115,7 +127,16 @@ class Scan:
               self._model_name = list(self.settings["Parameters"].keys())[0]
            else:
               self._model_name = "default"
+        else:
+           self._model_name = model_name
+
+        # Wrap user-supplied likelihood and prior functions with some extra sanity checking
         self._wrapped_function = self._wrap_function()
+        if prior_func is not None:
+           self._wrapped_prior = self._wrap_prior()
+        else:
+           self._wrapped_prior = None
+
         self._scanned = False
 
         # Make up a name for the run, if user didn't provide one
@@ -173,22 +194,39 @@ class Scan:
             else:
                 raise ValueError("No prior settings found! These need to be either supplied in simplified form via the 'bounds' and 'prior_types' arguments, or else supplied in long form (following the GAMBIT YAML format) in the 'settings' dictionary under the 'Priors' key (or under the 'Parameters' key in the short-cut format)")
         #print(self.settings)
-        #print("Scan settings:")
-        #print("==============")
-        #print(yaml.dump(self.settings, default_flow_style=False))
+        print("Scan settings in:")
+        print("==============")
+        print(yaml.dump(self.settings, default_flow_style=False))
 
     def _wrap_function(self):
         """
         """
-        def wrapped_function(par_dict):
+        def wrapped_function(scan,par_dict):
             """
             """
             print("par_dict:", par_dict)
-            arguments = [par_dict["{}::{}".format(self._model_name, n)]
+            print("par_dict.items():", [(k,v) for k,v in par_dict.items()])
+            print("self._argument_names:",self._argument_names)
+            print("self._model_name:",self._model_name)
+            arguments = [par_dict["{0}::{1}".format(self._model_name, n)]
               for n in self._argument_names]
-            return self.function(*arguments, **(self.kwargs or {}))
+            return self.function(scan, *arguments, **(self.kwargs or {}))
 
         return wrapped_function
+
+    def _wrap_prior(self):
+       """Wrap the user-supplied prior transformation function so that we can
+          do some sanity checking on it"""
+       def wrapped_prior(scan,vec,map):
+          #Tell ScannerBit the dimension of the parameter space
+          scan.ensure_size(vec,len(self._argument_names))
+          self.prior_func(vec,map)
+          # Check that user added all the parameters
+          for p in self._argument_names:
+             if p not in map.keys() \
+              and self._model_name+"::"+p not in map.keys():
+                 raise ValueError("Error in user-supplied prior transformation function! User must define parameters {0} or {1} in the 'map' argument, however parameter {2} was not found! Please fix your prior transformation function.".format(self._argument_names,[self._model_name+"::"+x for x in self._argument_names],p))
+       return wrapped_prior
 
     def scan(self):
        """Perform a scan. This runs a function that is decorated in such a 
@@ -199,7 +237,7 @@ class Scan:
 
        Downside is that all arguments must be pickle-able.
        """
-       _run_scan(self.settings, self._wrapped_function, self.prior_func)
+       _run_scan(self.settings, self._wrapped_function, self._wrapped_prior)
        MPI.COMM_WORLD.Barrier()
        rank = MPI.COMM_WORLD.Get_rank()
        print("Rank {0} passed scan end barrier!".format(rank))

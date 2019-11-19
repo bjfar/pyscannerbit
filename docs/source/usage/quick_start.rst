@@ -27,7 +27,7 @@ Define the log-likelihood function you wish to scan, and (if desired) a prior tr
         ScannerBit.ensure_size(vec, 1) # this needs to be the first line!
         map["model1::x"] = 5.0 - 10.0*vec[0]
 
-If you want to tell ScannerBit to handle the prior transformation itself via the scan settings then just set a dummy function for the prior::
+If you want to tell ScannerBit to handle the prior transformation itself via the scan settings then just set a dummy function for the prior (NOTE! Turns out this doesn't work either. For now you must manually specify the prior transformation as above. Whatever you set in the settings below will do nothing, and the dummy prior will just return a null transformation and an error)::
 
     def dummy_prior(vec, map):
         pass

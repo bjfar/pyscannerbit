@@ -1,16 +1,25 @@
 import pyscannerbit.scan as sb
 import pyscannerbit.defaults as defaults
+from pyscannerbit.ScannerBit.python import ScannerBit
 import matplotlib.pyplot as plt
 import copy
+import inspect
 
 # Test function
-def test_logl(x,y,z):
-  #scan.print("x+y+z",x+y+z) # Save custom entry to output data
+def test_logl(scan,x,y,z):
+  scan.print("x+y+z",x+y+z) # Save custom entry to output data
   return -0.5*( (x-10)**2 + (y-15)**2 + (z+3)**2 ) # fitness function to maximise (log-likelihood)
 
-# Prior function; seems not to be optional like it should be.
+# Prior function; seems not to be optional like it should be so use null function
+# def prior(vec, map):
+#  pass
+# Nope, no good, can't use null function!
+# Transform unit hypercube to space of interest manually.
 def prior(vec, map):
-  return map
+    map["model1::x"] = 1.0 - 40.0*vec[0]
+    map["model1::y"] = 1.0 - 40.0*vec[1]
+    map["model1::z"] = 1.0 - 40.0*vec[2]
+
 
 # Override some scanner settings
 # Easier to take the defaults and replace stuff rather than building from scratch
@@ -25,9 +34,23 @@ settings["Scanner"]["scanners"]["toy_mcmc"] = {"point_number": 10}
 
 
 # Create scan manager object
-myscan = sb.Scan(test_logl, bounds=[[1., 40.]] * 3, prior_types=["flat", "flat", "log"], prior_func=prior, scanner="toy_mcmc", settings=settings)
+myscan = sb.Scan(test_logl, bounds=[[1., 40.]] * 3, prior_types=["flat", "flat", "log"], prior_func=prior, scanner="toy_mcmc", settings=settings, model_name='model1')
 print(myscan)
 myscan.scan()
+
+quit()
+
+# Wrapped scan not working, so extract objects manually and test in raw run function
+def f(m):
+   return 5
+
+#sb._run_scan(myscan.settings, f, prior) # Works!
+
+print("myscan._wrapped_function",myscan._wrapped_function)
+print("args: ",inspect.getargspec(myscan._wrapped_function))
+sb._run_scan(myscan.settings, myscan._wrapped_function, prior) # Fails! Somehow the wrapped function isn't working
+
+quit()
 
 # Retrieve h5py group object, augmented with some helpful routines
 hdf5 = myscan.get_hdf5()
