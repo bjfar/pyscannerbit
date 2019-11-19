@@ -1,6 +1,8 @@
 pyScannerBit: A Python wrapper for the ScannerBit module of GAMBIT
 ===
 
+For full docs please visit our [readthedocs](https://pyscannerbit.readthedocs.io) pages (note, still under development).
+
 Dependencies
 ---
 
