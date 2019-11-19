@@ -1,10 +1,11 @@
 """Utility to run a function as a process
 
-   From: https://gist.github.com/schlamar/2311116
+   Modified from: https://gist.github.com/schlamar/2311116
 """
 
 import os
 import sys
+import signal
 import traceback
 from functools import wraps
 from multiprocessing import Process, Queue
@@ -38,9 +39,15 @@ def processify(func):
     def wrapper(*args, **kwargs):
         q = Queue()
         p = Process(target=process_func, args=[q] + list(args), kwargs=kwargs)
-        p.start()
-        ret, error = q.get()
-        p.join()
+        try:
+           p.start()
+           ret, error = q.get()
+           p.join()
+        except KeyboardInterrupt:
+           print("CTRL-C detected, killing scan subprocess...")
+           # This is a bit drastic, soften it when ScannerBit can do some signal handling
+           os.kill(p.pid, signal.SIGKILL)
+           quit()
 
         if error:
             ex_type, ex_value, tb_str = error

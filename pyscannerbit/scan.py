@@ -32,6 +32,10 @@ from .utils import _merge
 from .hdf5_help import get_data, HDF5 
 from .processify import processify
 
+class SanityCheckException(Exception):
+    """Exception thrown by sanity checks of user-supplied input"""
+    pass
+
 def _add_default_options(options):
    """Inspect user-supplied options, and fill in any missing
       bits with defaults"""
@@ -43,6 +47,34 @@ def func_partial(func, *args, **kwargs):
     """A functools.partial alternative, which returns a real function.
        Can be used to construct methods."""
     return lambda *a, **kw: func(*(args + a), **dict(kwargs, **kw))
+
+class SafeVec:
+   """A simple wrapper class for the 'vec' argument to user prior functions,
+      with nicer error messages"""
+   def __init__(self,vec,size):
+       self.vec = vec
+       self.size = size
+
+   def __getitem__(self, key):
+       try:
+           if float(key).is_integer():
+             if key >= self.size:
+                msg="Error accessing item '{0}' in 'vec' argument of user-supplied prior function! The size of 'vec' is {1} so entry {0} doesn't exist!".format(key,self.size) 
+                raise SanityCheckException(msg)
+             elif key < 0:
+                msg="Error accessing item '{0}' in 'vec' argument of user-supplied prior function! The 'vec' behaves like a list and must be indexed by a non-negative integer.".format(key) 
+                raise SanityCheckException(msg)
+           else:
+             msg="Error accessing item '{0}' in 'vec' argument of user-supplied prior function! 'vec' behaves like a list and must indexed by an integer.".format(key)
+             raise SanityCheckException(msg)
+       except (ValueError, AttributeError):
+          msg="Error accessing item '{0}' in 'vec' argument of user-supplied prior function! '{0}' does not seem to be an integer, or even a number!".format(key)
+          raise SanityCheckException(msg)
+       return self.vec[key]
+
+   def __setitem__(self, key, value):
+       msg="Error setting item '{0}' to '{1}' in 'vec' argument of user-supplied prior function! 'vec' is read-only!".format(key,value) 
+       raise SanityCheckException(msg)
 
 @processify # Run this function in a separate process, so that scanner plugins can be re-loaded between scans
 def _run_scan(settings, loglike_func, prior_func):
@@ -103,10 +135,14 @@ class Scan:
 
         # Determine parameter names, either automatically or from 'fargs' argument
         if fargs is None:
-            signature = inspect.getargspec(self.function)
+            signature = inspect.signature(self.function)
+            print("signature:", signature.parameters.items())
             # First argument needs to be the 'scan' object, to allow access to printers etc. Skip it in determination of parameter names.
-            self._argument_names = signature.args[1:]
-            #self._argument_names = signature.args
+            par_names = signature.parameters.keys()
+            self._argument_names = list(par_names)[1:]
+            if list(par_names)[0] is not "scan":
+                msg="\n\nError in signature of user-supplied log-likelihood function! The first argument must be named 'scan' and will be passed a reference to a global ScannerBit object that can be used to e.g. print extra information to the scan output file.\n"
+                raise SanityCheckException(msg)
         else:
             self._argument_names = fargs
 
@@ -204,10 +240,6 @@ class Scan:
         def wrapped_function(scan,par_dict):
             """
             """
-            print("par_dict:", par_dict)
-            print("par_dict.items():", [(k,v) for k,v in par_dict.items()])
-            print("self._argument_names:",self._argument_names)
-            print("self._model_name:",self._model_name)
             arguments = [par_dict["{0}::{1}".format(self._model_name, n)]
               for n in self._argument_names]
             return self.function(scan, *arguments, **(self.kwargs or {}))
@@ -219,13 +251,36 @@ class Scan:
           do some sanity checking on it"""
        def wrapped_prior(scan,vec,map):
           #Tell ScannerBit the dimension of the parameter space
-          scan.ensure_size(vec,len(self._argument_names))
-          self.prior_func(vec,map)
+          size=len(self._argument_names)
+          scan.ensure_size(vec,size)
+          tmp_map = {}
+          self.prior_func(SafeVec(vec,size),tmp_map)
           # Check that user added all the parameters
+          has_model_name=None
           for p in self._argument_names:
-             if p not in map.keys() \
-              and self._model_name+"::"+p not in map.keys():
-                 raise ValueError("Error in user-supplied prior transformation function! User must define parameters {0} or {1} in the 'map' argument, however parameter {2} was not found! Please fix your prior transformation function.".format(self._argument_names,[self._model_name+"::"+x for x in self._argument_names],p))
+             if self._model_name+"::"+p not in tmp_map.keys() \
+               and p in tmp_map.keys():
+                if has_model_name is None: 
+                   has_model_name=False
+                elif has_model_name is True:
+                   msg="Error in user-supplied prior transformation function! Parameter names set in 'map' are inconsistent; some appear to have the model name prefix, while others do not. Please edit your prior function to use only one format or the other."  
+                   raise SanityCheckException(msg)
+             elif p not in tmp_map.keys():
+                   msg="Error in user-supplied prior transformation function! User must define parameters {0} or {1} in the 'map' argument, however parameter {2} was not found! Please fix your prior transformation function.".format(self._argument_names,[self._model_name+"::"+x for x in self._argument_names],p)
+                   raise SanityCheckException(msg)
+             else:
+                if has_model_name is None: 
+                   has_model_name=True
+                elif has_model_name is False:
+                   msg="Error in user-supplied prior transformation function! Parameter names set in 'map' are inconsistent; some appear to have the model name prefix, while others do not. Please edit your prior function to use only one format or the other."
+                   raise SanityCheckException(msg)
+          if not has_model_name:
+             # If they added them without the 'model' part of the name then add that automatically now
+             for k,v in tmp_map.items():
+                 map[self._model_name+"::"+k] = v
+          else:
+             for k,v in tmp_map.items():
+                 map[k] = v
        return wrapped_prior
 
     def scan(self):
@@ -237,7 +292,15 @@ class Scan:
 
        Downside is that all arguments must be pickle-able.
        """
-       _run_scan(self.settings, self._wrapped_function, self._wrapped_prior)
+       try:
+          _run_scan(self.settings, self._wrapped_function, self._wrapped_prior)
+       except RuntimeError as err:
+           # Error messages thrown in the subprocess get kind of mangled, need to
+           # help it print correctly
+           print("Error thrown from ScannerBit subprocess:\n")
+           print(err.args[0].replace('\\n', '\n')) # Newlines appear to be weirdly escaped. Fix them. 
+           quit()
+
        MPI.COMM_WORLD.Barrier()
        rank = MPI.COMM_WORLD.Get_rank()
        print("Rank {0} passed scan end barrier!".format(rank))
