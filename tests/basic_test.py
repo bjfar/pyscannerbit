@@ -16,9 +16,9 @@ def test_logl(scan,x,y,z):
 # Nope, no good, can't use null function!
 # Transform unit hypercube to space of interest manually.
 def prior(vec, map):
-    map["model1::x"] = 1.0 - 40.0*vec[0]
-    map["model1::y"] = 1.0 - 40.0*vec[1]
-    map["model1::z"] = 1.0 - 40.0*vec[2]
+    map["x"] = 1.0 - 40.0*vec[0]
+    map["y"] = 1.0 - 40.0*vec[1]
+    map["z"] = 1.0 - 40.0*vec[2]
 
 
 # Override some scanner settings
