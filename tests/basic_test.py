@@ -16,10 +16,9 @@ def test_logl(scan,x,y,z):
 # Nope, no good, can't use null function!
 # Transform unit hypercube to space of interest manually.
 def prior(vec, map):
-    map["x"] = 1.0 - 40.0*vec[0]
-    map["y"] = 1.0 - 40.0*vec[1]
-    map["z"] = 1.0 - 40.0*vec[2]
-
+    map["x"] = 20.0 - 40.0*vec[0]
+    map["y"] = 20.0 - 40.0*vec[1]
+    map["z"] = 20.0 - 40.0*vec[2]
 
 # Override some scanner settings
 # Easier to take the defaults and replace stuff rather than building from scratch
@@ -28,29 +27,14 @@ def prior(vec, map):
 settings = copy.deepcopy(defaults._default_options)
 #settings["Scanner"]["scanners"]["multinest"] = {"tol": 0.5, "nlive": 500} # Configured for quick and dirty scan 
 # Currently cannot use external scanners due to rpath issues. Use internal ones only for now.
-#settings["Scanner"]["scanners"]["twalk"] = {"sqrtR": 1.05}
+settings["Scanner"]["scanners"]["twalk"] = {"sqrtR": 1.05}
 #settings["Scanner"]["scanners"]["random"] = {"point_number": 100}
-settings["Scanner"]["scanners"]["toy_mcmc"] = {"point_number": 10}
+#settings["Scanner"]["scanners"]["toy_mcmc"] = {"point_number": 10}
 
 
 # Create scan manager object
-myscan = sb.Scan(test_logl, bounds=[[1., 40.]] * 3, prior_types=["flat", "flat", "log"], prior_func=prior, scanner="toy_mcmc", settings=settings, model_name='model1')
-print(myscan)
+myscan = sb.Scan(test_logl, bounds=[[1., 40.]] * 3, prior_types=["flat", "flat", "log"], prior_func=prior, scanner="twalk", settings=settings, model_name='model1')
 myscan.scan()
-
-quit()
-
-# Wrapped scan not working, so extract objects manually and test in raw run function
-def f(m):
-   return 5
-
-#sb._run_scan(myscan.settings, f, prior) # Works!
-
-print("myscan._wrapped_function",myscan._wrapped_function)
-print("args: ",inspect.getargspec(myscan._wrapped_function))
-sb._run_scan(myscan.settings, myscan._wrapped_function, prior) # Fails! Somehow the wrapped function isn't working
-
-quit()
 
 # Retrieve h5py group object, augmented with some helpful routines
 hdf5 = myscan.get_hdf5()
@@ -83,5 +67,5 @@ fig.savefig("scan_object_test_logl.png")
 
 # This is still an HDF5-like object (with the root being the group containing the datasets for this scan) 
 # e.g., you can do
-print(hdf5["default::x"])
+print(hdf5["model1::x"])
 
