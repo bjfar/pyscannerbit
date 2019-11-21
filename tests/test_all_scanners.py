@@ -24,24 +24,18 @@ def prior(vec, map):
     map["y"] = -4 + 8*vec[1]
     map["z"] = -4 + 8*vec[2]
 
-# Override some scanner settings (this is a little ugly for now)
-# Can make it a little nicer with defaultdict and some recursion
-from collections import defaultdict
-def rec_dd():
-    return defaultdict(rec_dd)
-settings = rec_dd() # Uses a new dict as default value when accessing non-existant keys
-
 # Settings for quick and dirty scans. Won't do very well, because the test function is
 # actually rather tough!
-scan_pars = settings["Scanner"]["scanners"]
-#scan_pars["multinest"] = {"tol": 0.5, "nlive": 100} 
-#scan_pars["polychord"] = {"tol": 1.0, "nlive": 20} 
-#scan_pars["diver"]     = {"convthresh": 1e-2, "NP": 300} 
-scan_pars["twalk"]     = {"sqrtR": 1.05}
-scan_pars["random"]    = {"point_number": 10000}
-scan_pars["toy_mcmc"]  = {"point_number": 10} # Acceptance ratio is really bad with this scanner, so don't ask for much
-scan_pars["badass"]    = {"points": 1000, "jumps": 10}
-scan_pars["pso"]       = {"NP": 400}
+# Don't have to specify all scanner options; anything missing will revert to defaults (see defaults.py)
+scanner_options = {}
+scanner_options["multinest"] = {"tol": 0.5, "nlive": 100} 
+scanner_options["polychord"] = {"tol": 1.0, "nlive": 20} 
+scanner_options["diver"]     = {"convthresh": 1e-2, "NP": 300} 
+scanner_options["twalk"]     = {"sqrtR": 1.05}
+scanner_options["random"]    = {"point_number": 10000}
+scanner_options["toy_mcmc"]  = {"point_number": 10} # Acceptance ratio is really bad with this scanner, so don't ask for much
+scanner_options["badass"  ]  = {"points": 1000, "jumps": 10}
+scanner_options["pso"]       = {"NP": 400}
 
 #scanners = ["multinest","polychord","diver","twalk"]
 #colors = ["r","m","b","g"]
@@ -52,8 +46,8 @@ if size is 1:
     colors += ["c","y"]
 
 # Test just one scanner
-#scanners = ["pso"]
-#colors = ["r"]
+scanners = ["pso"]
+colors = ["r"]
 
 Nscans = len(scanners)
 results = {}
@@ -62,7 +56,7 @@ results = {}
 for s in scanners:
     # Create scan manager object
     # (prior_types argument currently does nothing)
-    myscan = sb.Scan(rastrigin, bounds=[[-4, 4]] * 3, prior_types=["flat"]*3, prior_func=prior, scanner=s, settings=settings)
+    myscan = sb.Scan(rastrigin, prior_func=prior, scanner=s, scanner_options=scanner_options[s])
     if new_scans:
         print("Running scan with {}".format(s))
         myscan.scan()

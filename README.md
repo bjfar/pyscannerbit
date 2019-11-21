@@ -84,6 +84,12 @@ the stripped tarball into pyscannerbit/scannerbit.
 NOTE! The GAMBIT version number is not automatically detected, so if
 this changes it will need to be updated in the `grab_ScannerBit.sh` script.  
 
+Upload new versions to PyPI
+---
+
+Mostly for my own sake because I keep forgetting how to do this:
+
+    twine upload dist/pyscannerbit-x.x.x.tar.gz 
 
 Known issues
 ---

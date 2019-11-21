@@ -41,6 +41,12 @@ _default_options = {
       "plugin": "toy_mcmc",
       "point_number": 10000,
       },
+    "badass": {
+      "like": "LogLike",
+      "plugin": "badass",
+      "points": 1000, 
+      "jumps": 10,
+      },
     "pso": {
       "plugin": "jswarm",
       "like":  "LogLike",

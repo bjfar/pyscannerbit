@@ -75,6 +75,7 @@ class CMakeBuild(build_ext_orig):
                       '-DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON',
                       '-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON',
                       '-DCMAKE_INSTALL_PREFIX:PATH=' + libout,
+                      '-DWITH_MPI=True',
                     ]
                  #    '-DCMAKE_FIND_DEBUG_MODE=ON',           
                  #    '-DPYBIND11_PYTHON_VERSION=3.6',
@@ -136,7 +137,7 @@ class CMakeBuild(build_ext_orig):
  
 setup(
     name='pyscannerbit',
-    version='0.0.28',
+    version='0.0.29',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',

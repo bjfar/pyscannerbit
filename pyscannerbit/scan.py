@@ -16,6 +16,8 @@ import h5py
 # Just doing this will initialise MPI, and it will automatically
 # call 'finalize' upon exit. So we need do nothing except import this.
 from mpi4py import MPI
+MPI_rank = MPI.COMM_WORLD.Get_rank()
+MPI_size = MPI.COMM_WORLD.Get_size()
 
 # DEBUG! Only used to check that YAML options looks reasonable
 import yaml
@@ -88,6 +90,11 @@ def _run_scan(settings, loglike_func, prior_func):
    # Should also trigger the loading of the scanner plugin libraries
    from .ScannerBit.python import ScannerBit
 
+   # Check that ScannerBit was compiled with MPI enabled if we are using more than one process
+   if MPI_size>1 and not ScannerBit.WITH_MPI:
+       msg = "ScannerBit has not been compiled with MPI enabled! Please try again using only one process."
+       raise RuntimeError(msg)
+
    print("prior_func:",prior_func)
    print("prior_func:",inspect.signature(prior_func))
 
@@ -99,7 +106,7 @@ def _run_scan(settings, loglike_func, prior_func):
        wrapped_prior = None
 
    # Create scan object
-   myscan = ScannerBit.scan(True)
+   myscan = ScannerBit.scan(False) # Do not Init_MPI in ScannerBit, we already did it out here in the wrapper.
 
    # Double check settings fed to ScannerBit!
    print("Scan settings:")
@@ -110,14 +117,22 @@ def _run_scan(settings, loglike_func, prior_func):
    # run scan
    # 'inifile' can be the name of a YAML file, or a dict.
    #myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=prior_func, restart=True)
-   myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=wrapped_prior, restart=True)
+   ret = myscan.run(inifile=settings, lnlike={"LogLike": wrapped_loglike}, prior=wrapped_prior, restart=True)
+   
+   if ret!=0:
+      msg = "Fatal error encountered while running ScannerBit!"
+      raise RuntimeError(msg)
+
+   MPI.COMM_WORLD.Barrier()
+   rank = MPI.COMM_WORLD.Get_rank()
+   print("Rank {0} passed scan end barrier!".format(rank))
 
 class Scan:
     """Helper object for setting up and running a scan, and
        making some basic plots.
     """
     def __init__(self, function, prior_func=None, bounds=None, prior_types=None, kwargs=None, scanner=None,
-      settings={}, model_name=None, output_path=None, fargs=None):
+      scanner_options={}, model_name=None, output_path=None, fargs=None):
         """
         function - Python function to be scanned
         prior_func - User-define prior transformation function (optional)
@@ -127,6 +142,7 @@ class Scan:
                       If None then the user is expected to do the inverse transform from
                       a unit hypercube to their parameter space themselves.
         scanner - Scanning algorithm to use
+        scanner_options - Configuration options dictionary for chosen scanning algorithm
         f_args - List of names of function argments to use (if None these are
          inferred from the signature of 'function')
         """
@@ -150,7 +166,19 @@ class Scan:
         self.bounds = bounds if bounds else [(0,1)] * len(self._argument_names)
         self.prior_types = prior_types if prior_types else ["flat"] * len(self._argument_names)
         self.scanner = scanner
-        self.settings = _add_default_options(copy.deepcopy(settings))
+
+        if scanner not in _default_options["Scanner"]["scanners"].keys():
+            msg = "Unknown scanner '{0}' was selected! Please choose from the following available scanning algorithms:".format(scanner)
+            for s in _default_options["Scanner"]["scanners"].keys():
+                msg += "\n   {0}".format(s)
+            raise ValueError(msg)
+
+        if MPI_size>1 and scanner in ["random","toy_mcmc"]:
+            msg = "Scanner {0} selected, however MPI_size>1, and unfortunately this algorithm is not yet parallelised. Please either choose another sampling algorithm, or run this algorithm on one process only."
+            raise ValueError(msg)
+
+        # Copy user-supplied scanner options into full scan settings dictionary
+        self.settings = _add_default_options(copy.deepcopy({"Scanner": {"scanners": {scanner: scanner_options}}}))
         self.kwargs = kwargs
 
         print("self._argument_names:", self._argument_names)
@@ -293,7 +321,7 @@ class Scan:
        Downside is that all arguments must be pickle-able.
        """
        try:
-          _run_scan(self.settings, self._wrapped_function, self._wrapped_prior)
+           _run_scan(self.settings, self._wrapped_function, self._wrapped_prior)
        except RuntimeError as err:
            # Error messages thrown in the subprocess get kind of mangled, need to
            # help it print correctly
@@ -301,9 +329,6 @@ class Scan:
            print(err.args[0].replace('\\n', '\n')) # Newlines appear to be weirdly escaped. Fix them. 
            quit()
 
-       MPI.COMM_WORLD.Barrier()
-       rank = MPI.COMM_WORLD.Get_rank()
-       print("Rank {0} passed scan end barrier!".format(rank))
        self._scanned = True
 
     def get_hdf5(self):
