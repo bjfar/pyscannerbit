@@ -46,8 +46,8 @@ if size is 1:
     colors += ["c","y"]
 
 # Test just one scanner
-scanners = ["pso"]
-colors = ["r"]
+#scanners = ["pso"]
+#colors = ["r"]
 
 Nscans = len(scanners)
 results = {}
