@@ -16,12 +16,19 @@ encounter on `github`_.
 For installation instructions see :ref:`installation`, and see the :ref:`quick start` guide to get your first scan up and running! 
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
 
    usage/installation
    usage/quick_start
-   examples/test
+
+.. toctree::
+   :caption: Usage
+
+   usage/raw_api
+
+.. toctree::
+   :caption: Examples
+
+   examples/all_scanners
  
 .. _GAMBIT: https://gambit.hepforge.org/
 .. _ScannerBit: https://arxiv.org/abs/1705.07959
