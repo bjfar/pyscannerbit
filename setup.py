@@ -138,7 +138,7 @@ class CMakeBuild(build_ext_orig):
  
 setup(
     name='pyscannerbit',
-    version='0.0.31',
+    version='0.0.32',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',
