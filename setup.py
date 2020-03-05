@@ -76,6 +76,7 @@ class CMakeBuild(build_ext_orig):
                       '-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON',
                       '-DCMAKE_INSTALL_PREFIX:PATH=' + libout,
                       '-DWITH_MPI=True',
+                      '-DNO_PYTHON_LIBS=TRUE'
                     ]
                  #    '-DCMAKE_FIND_DEBUG_MODE=ON',           
                  #    '-DPYBIND11_PYTHON_VERSION=3.6',

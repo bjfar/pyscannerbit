@@ -86,7 +86,7 @@ copy_dir(${GAMBIT_DIR}/scratch
 # Copy each of the scanner 'backend' shared libraries
 set(MULTINEST_VERSION 3.11)
 set(POLYCHORD_VERSION 1.15)
-set(DIVER_VERSION 1.0.4)
+set(DIVER_VERSION 1.0.5)
 
 # Multinest
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/libnest3.so
