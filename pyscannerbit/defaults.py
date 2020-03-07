@@ -4,7 +4,7 @@ _default_options = {
   "options": {
     "output_file": "results.hdf5",
     "group": "/",
-    "delete_file_on_restart": "true",
+    "delete_file_on_restart": True,
     }
   },
 "Scanner": {
@@ -51,8 +51,8 @@ _default_options = {
       "plugin": "jswarm",
       "like":  "LogLike",
       "NP": 400,
-      "adaptive_phi": "true",
-      "adaptive_omega": "true",
+      "adaptive_phi": True,
+      "adaptive_omega": True,
       "verbosity": 2,
       },
     },
