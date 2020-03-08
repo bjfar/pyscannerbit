@@ -5,8 +5,9 @@
 import os
 import sys
 import ctypes
-flags = sys.getdlopenflags()
-sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
+# NOTE: moved to __init__.py
+# flags = sys.getdlopenflags()
+# sys.setdlopenflags(flags | ctypes.RTLD_GLOBAL)
 
 from functools import partial
 import inspect
@@ -24,9 +25,10 @@ import yaml
 
 # Need to tell ScannerBit where its config files are located
 # We do this via a special environment variable
-gambit_path = os.path.dirname(__file__)
-print("Setting GAMBIT_RUN_DIR to:",gambit_path)
-os.environ["GAMBIT_RUN_DIR"] = gambit_path
+# Note: moved to __init__.py
+# gambit_path = os.path.dirname(__file__)
+# print("Setting GAMBIT_RUN_DIR to:",gambit_path)
+# os.environ["GAMBIT_RUN_DIR"] = gambit_path
 
 # Other python helper tools
 from .defaults import _default_options
