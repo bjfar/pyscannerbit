@@ -85,7 +85,7 @@ copy_dir(${GAMBIT_DIR}/scratch
 
 # Copy each of the scanner 'backend' shared libraries
 set(MULTINEST_VERSION 3.11)
-set(POLYCHORD_VERSION 1.15)
+set(POLYCHORD_VERSION 1.16)
 set(DIVER_VERSION 1.0.5)
 
 # Multinest

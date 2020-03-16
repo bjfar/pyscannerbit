@@ -12,7 +12,7 @@ import ctypes
 from functools import partial
 import inspect
 import copy
-import h5py
+# import h5py
 
 # Just doing this will initialise MPI, and it will automatically
 # call 'finalize' upon exit. So we need do nothing except import this.
@@ -33,8 +33,8 @@ import yaml
 # Other python helper tools
 from .defaults import _default_options
 from .utils import _merge
-from .hdf5_help import get_data, HDF5 
-from .processify import processify
+# from .hdf5_help import get_data, HDF5 
+# from .processify import processify
 
 class SanityCheckException(Exception):
     """Exception thrown by sanity checks of user-supplied input"""
@@ -80,7 +80,7 @@ class SafeVec:
        msg="Error setting item '{0}' to '{1}' in 'vec' argument of user-supplied prior function! 'vec' is read-only!".format(key,value) 
        raise SanityCheckException(msg)
 
-@processify # Run this function in a separate process, so that scanner plugins can be re-loaded between scans
+#@processify # Run this function in a separate process, so that scanner plugins can be re-loaded between scans
 def _run_scan(settings, loglike_func, prior_func):
    """Perform a scan. This function is decorated in such a 
       way that it runs in a new process. This is important
