@@ -2,6 +2,7 @@
 
 # Need to do a little voodoo so that dynamically loaded shared libraries
 # can dynamically load other shared libraries (the scanner plugins)
+from .ScannerBit.python import ScannerBit
 import os
 import sys
 import ctypes
@@ -12,7 +13,7 @@ import ctypes
 from functools import partial
 import inspect
 import copy
-# import h5py
+import h5py
 
 # Just doing this will initialise MPI, and it will automatically
 # call 'finalize' upon exit. So we need do nothing except import this.
@@ -33,8 +34,8 @@ import yaml
 # Other python helper tools
 from .defaults import _default_options
 from .utils import _merge
-# from .hdf5_help import get_data, HDF5 
-# from .processify import processify
+from .hdf5_help import get_data, HDF5 
+from .processify import processify
 
 class SanityCheckException(Exception):
     """Exception thrown by sanity checks of user-supplied input"""
@@ -80,7 +81,7 @@ class SafeVec:
        msg="Error setting item '{0}' to '{1}' in 'vec' argument of user-supplied prior function! 'vec' is read-only!".format(key,value) 
        raise SanityCheckException(msg)
 
-#@processify # Run this function in a separate process, so that scanner plugins can be re-loaded between scans
+@processify # Run this function in a separate process, so that scanner plugins can be re-loaded between scans
 def _run_scan(settings, loglike_func, prior_func):
    """Perform a scan. This function is decorated in such a 
       way that it runs in a new process. This is important
@@ -90,7 +91,7 @@ def _run_scan(settings, loglike_func, prior_func):
       """
    # Import functions from the ScannerBit.so library
    # Should also trigger the loading of the scanner plugin libraries
-   from .ScannerBit.python import ScannerBit
+   # from .ScannerBit.python import ScannerBit
 
    # Check that ScannerBit was compiled with MPI enabled if we are using more than one process
    if MPI_size>1 and not ScannerBit.WITH_MPI:
@@ -329,7 +330,7 @@ class Scan:
            # help it print correctly
            print("Error thrown from ScannerBit subprocess:\n")
            print(err.args[0].replace('\\n', '\n')) # Newlines appear to be weirdly escaped. Fix them. 
-           quit()
+           exit()
 
        self._scanned = True
 

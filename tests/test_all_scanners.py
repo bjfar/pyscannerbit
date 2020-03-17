@@ -62,22 +62,20 @@ for s in scanners:
         myscan.scan()
     else:
         print("Retrieving results from previous {} scan".format(s)) 
-    #results[s] = myscan.get_hdf5()
+    results[s] = myscan.get_hdf5()
         
 # Plot results
 # Only want to do this on one process
-#if rank is 0:
-    #fig = plt.figure(figsize=(4*Nscans,8))
-    #for i,(s,c) in enumerate(zip(scanners,colors)):
-        #x,y = results[s].get_params(["x","y"])
-        #ax = fig.add_subplot(2,Nscans,i+1)
-        #ax.set_title("{0} (N={1})".format(s,len(x)))
-        #ax.scatter(x,y,c=c,label=s,s=0.5)
-        #ax = fig.add_subplot(2,Nscans,i+1+Nscans)
-        #results[s].plot_profile_likelihood(ax,"x","y") 
+if rank is 0:
+    fig = plt.figure(figsize=(4*Nscans,8))
+    for i,(s,c) in enumerate(zip(scanners,colors)):
+        x,y = results[s].get_params(["x","y"])
+        ax = fig.add_subplot(2,Nscans,i+1)
+        ax.set_title("{0} (N={1})".format(s,len(x)))
+        ax.scatter(x,y,c=c,label=s,s=0.5)
+        ax = fig.add_subplot(2,Nscans,i+1+Nscans)
+        results[s].plot_profile_likelihood(ax,"x","y") 
     
-    #ax.legend(loc=1, frameon=True, framealpha=1, prop={'size':10}) 
-    #plt.tight_layout()
-    #fig.savefig("test_all_scanners.png")
-
-
+    ax.legend(loc=1, frameon=True, framealpha=1, prop={'size':10}) 
+    plt.tight_layout()
+    fig.savefig("test_all_scanners.png")
