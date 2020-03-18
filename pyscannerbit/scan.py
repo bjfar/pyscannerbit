@@ -2,7 +2,6 @@
 
 # Need to do a little voodoo so that dynamically loaded shared libraries
 # can dynamically load other shared libraries (the scanner plugins)
-from .ScannerBit.python import ScannerBit
 import os
 import sys
 import ctypes
@@ -91,8 +90,9 @@ def _run_scan(settings, loglike_func, prior_func):
       """
    # Import functions from the ScannerBit.so library
    # Should also trigger the loading of the scanner plugin libraries
-   # from .ScannerBit.python import ScannerBit
-
+   from .ScannerBit.python import ScannerBit
+   # check if hdf5 libraries are the same
+   ScannerBit.check_hdf5_version()
    # Check that ScannerBit was compiled with MPI enabled if we are using more than one process
    if MPI_size>1 and not ScannerBit.WITH_MPI:
        msg = "ScannerBit has not been compiled with MPI enabled! Please try again using only one process."
