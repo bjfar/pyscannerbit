@@ -94,8 +94,21 @@ Mostly for my own sake because I keep forgetting how to do this:
 Known issues
 ---
 Sometimes differences between the hdf5 version h5py comes with and the hdf5 version ScannerBit uses may cause ScannerBit to not load files or segfault.  If this happens, try recompiling h5py using the system's hdf5 headers:
+
 ```
 pip install --no-binary=h5py h5py --no-cache-dir --ignore-installed --user
+```
+
+You may need to specify a version with:
+
+```
+HDF5_VERSION=X.Y.Z pip install --no-binary=h5py h5py --no-cache-dir --ignore-installed --user
+```
+
+with `X`, `Y`, `Z` replaced by the version needed.  To find the version ScannerBit uses, run (while NOT in the pyscannerbit directory):
+
+```
+python3 -c "from pyscannerbit.ScannerBit.python import ScannerBit as scan; print(scan.get_hdf5_version())" 
 ```
 
 License
