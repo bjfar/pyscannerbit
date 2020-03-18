@@ -218,6 +218,8 @@ class Scan:
         if self.scanner == "multinest" \
         or self.scanner == "polychord":
             self.posterior_par = "Posterior"
+        elif self.scanner == "twalk":
+            self.posterior_par = "mult"
         else:
             self.posterior_par = None
 
