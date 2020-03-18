@@ -133,7 +133,7 @@ for s in scanners:
     # myscan = sb.Scan(rastrigin, prior_func=prior, scanner=s, scanner_options=scanner_options[s])
     myscan = scan.scan(False)
     settings["Scanner"]["use_scanner"] = s
-    if new scans:
+    if new_scans:
         print("Running scan with {}".format(s))
         myscan.run(inifile=settings, lnlike={"LogLike": rastrigin}, prior=prior, restart=True)
     else:
