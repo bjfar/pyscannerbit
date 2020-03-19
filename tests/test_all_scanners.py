@@ -57,6 +57,7 @@ for s in scanners:
     # Create scan manager object
     # (prior_types argument currently does nothing)
     myscan = sb.Scan(rastrigin, prior_func=prior, scanner=s, scanner_options=scanner_options[s])
+    myscan.rm_samples()
     if new_scans:
         print("Running scan with {}".format(s))
         myscan.scan()

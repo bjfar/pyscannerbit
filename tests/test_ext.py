@@ -3,26 +3,26 @@
 #       python environment variable "PYTHONPATH".
 
 import yaml
-from pyscannerbit.ScannerBit.python import ScannerBit as scan
+from pyscannerbit import ext_module as ext
 
-print("WITH_MPI=",scan.WITH_MPI) # Test if ScannerBit was compiled with MPI enabled
+print("WITH_MPI=",ext.sb.WITH_MPI) # Test if ScannerBit was compiled with MPI enabled
 
 # define likelihood, technically optional
 def like(m):
     a = m["model1::x"]
-    scan.print("my_param", 0.5) # can print custom parameters 
+    ext.sb.print("my_param", 0.5) # can print custom parameters 
     
     return -a*a/2.0
 
 # define prior, optional
 def prior(vec, map):
     # tell ScannerBit that the hypergrid dimension is 1
-    scan.ensure_size(vec, 1) # this needs to be the first line!
+    ext.sb.ensure_size(vec, 1) # this needs to be the first line!
     
     map["model1::x"] = 5.0 - 10.0*vec[0]
 
 # declare scan object
-myscan = scan.scan(True)
+myscan = ext.sb.scan(True)
 
 # run scan from inifile
 # myscan.run(inifile="ScannerBit.yaml", lnlike={"LogLike": like}, prior=prior, restart=True)

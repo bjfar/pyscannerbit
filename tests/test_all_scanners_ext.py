@@ -1,15 +1,12 @@
 """Demo script which runs all the (serious) scanners to which pyScannerBit has access"""
 
+import os
 import numpy as np
 import math
-#import pyscannerbit.scan as sb
 import matplotlib.pyplot as plt
 import h5py
-#from .defaults import _default_options
-#from .utils import _merge
 from pyscannerbit.hdf5_help import get_data, HDF5 
-from pyscannerbit.ScannerBit.python import ScannerBit as scan
-
+from pyscannerbit import ext_module as ext
 from mpi4py import MPI
 rank = MPI.COMM_WORLD.Get_rank()
 size = MPI.COMM_WORLD.Get_size()
@@ -111,6 +108,16 @@ def get_hdf5(settings):
                 loglike=loglike_par, posterior=posterior_par)
     return g
 
+def rm_samples(settings):
+    file_name = settings["Printer"]["options"]["output_file"]
+    DIR = settings["KeyValues"]["default_output_path"]
+    fullpath = "{}/samples/{}".format(DIR, file_name)
+    try:
+        os.remove(fullpath)
+    except:
+        print("No such file: " + fullpath)
+
+
 scanners = ["multinest","polychord","diver","twalk"]
 #colors = ["r","m","b","g"]
 #scanners = ["twalk","badass","pso"]
@@ -131,7 +138,8 @@ for s in scanners:
     # Create scan manager object
     # (prior_types argument currently does nothing)
     # myscan = sb.Scan(rastrigin, prior_func=prior, scanner=s, scanner_options=scanner_options[s])
-    myscan = scan.scan(False)
+    rm_samples(settings)
+    myscan = ext.sb.scan(False)
     settings["Scanner"]["use_scanner"] = s
     if new_scans:
         print("Running scan with {}".format(s))

@@ -90,11 +90,11 @@ def _run_scan(settings, loglike_func, prior_func):
       """
    # Import functions from the ScannerBit.so library
    # Should also trigger the loading of the scanner plugin libraries
-   from .ScannerBit.python import ScannerBit
+   from . import ext_module as ext
    # check if hdf5 libraries are the same
-   ScannerBit.check_hdf5_version()
+   ext.sb.check_hdf5_version()
    # Check that ScannerBit was compiled with MPI enabled if we are using more than one process
-   if MPI_size>1 and not ScannerBit.WITH_MPI:
+   if MPI_size>1 and not ext.sb.WITH_MPI:
        msg = "ScannerBit has not been compiled with MPI enabled! Please try again using only one process."
        raise RuntimeError(msg)
 
@@ -102,14 +102,14 @@ def _run_scan(settings, loglike_func, prior_func):
    print("prior_func:",inspect.signature(prior_func))
 
    # Attach the ScannerBit object to the first argument of the wrapped likelihood and prior functions
-   wrapped_loglike = func_partial(loglike_func,ScannerBit)
+   wrapped_loglike = func_partial(loglike_func,ext.sb)
    if prior_func is not None:
-       wrapped_prior = func_partial(prior_func,ScannerBit)
+       wrapped_prior = func_partial(prior_func,ext.sb)
    else:
        wrapped_prior = None
 
    # Create scan object
-   myscan = ScannerBit.scan(False) # Do not Init_MPI in ScannerBit, we already did it out here in the wrapper.
+   myscan = ext.sb.scan(False) # Do not Init_MPI in ScannerBit, we already did it out here in the wrapper.
 
    # Double check settings fed to ScannerBit!
    print("Scan settings:")
@@ -346,3 +346,12 @@ class Scan:
             else:
                 raise IOError("Failed to open HDF5 output of scan, however we did not perform a scan just now. The output will only exist if you have previously run this scan. Please check that you did this!")
         return g
+
+    def rm_samples(self):
+        file_name = self.settings["Printer"]["options"]["output_file"]
+        DIR = self.settings["KeyValues"]["default_output_path"]
+        fullpath = "{}/samples/{}".format(DIR, file_name)
+        try:
+            os.remove(fullpath)
+        except:
+            print("No such file: " + fullpath)

@@ -108,7 +108,7 @@ HDF5_VERSION=X.Y.Z pip install --no-binary=h5py h5py --no-cache-dir --ignore-ins
 with `X`, `Y`, `Z` replaced by the version needed.  To find the version ScannerBit uses, run (while NOT in the pyscannerbit directory):
 
 ```
-python3 -c "from pyscannerbit.ScannerBit.python import ScannerBit as scan; print(scan.get_hdf5_version())" 
+python3 -c "from pyscannerbit import ext_module as ext; print(ext.sb.get_hdf5_version())" 
 ```
 
 License
