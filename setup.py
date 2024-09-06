@@ -75,13 +75,16 @@ class CMakeBuild(build_ext_orig):
                       '-DCMAKE_BUILD_WITH_INSTALL_RPATH:BOOL=ON',
                       '-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON',
                       '-DCMAKE_INSTALL_PREFIX:PATH=' + libout,
-                      '-DWITH_MPI=True',
+                      '-DWITH_MPI=ON',
                       '-DNO_PYTHON_LIBS=TRUE',
-                      '-DVERBOSE_SCAN_PYTHON=TRUE'
+                      '-DVERBOSE_SCAN_PYTHON=TRUE',
+                      '-DCMAKE_DISABLE_FIND_PACKAGE_pybind11=1',
+                      '-DWITH_PYTHON_SCANNERBIT=ON',
+                      #'-DCMAKE_VERBOSE_MAKEFILE=ON',
+                      #'--trace-expand',
+                      #'-DCMAKE_FIND_DEBUG_MODE=ON',           
+                      #'-DPYBIND11_PYTHON_VERSION=3.6',
                     ]
-                 #    '-DCMAKE_FIND_DEBUG_MODE=ON',           
-                 #    '-DPYBIND11_PYTHON_VERSION=3.6',
-                 #]
 
         if sys.version_info[0] < 3:
             cmake_args += ['-DFORCE_PYTHON2=True']
@@ -139,7 +142,7 @@ class CMakeBuild(build_ext_orig):
  
 setup(
     name='pyscannerbit',
-    version='0.0.32',
+    version='0.1.0',
     author='Ben Farmer',
     # Add yourself if you contribute to this package
     author_email='ben.farmer@gmail.com',

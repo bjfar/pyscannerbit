@@ -36,7 +36,8 @@ add_subdirectory("${GAMBIT_DIR}")
 # There might be a "cleaner" CMake way to do this... I will do it this "dumb"
 # way for now.
 
-add_custom_target(post_build DEPENDS scan_python)
+#add_custom_target(post_build DEPENDS scan_python)
+add_custom_target(post_build DEPENDS ScannerBit_python_interface)
 
 # Copies stuff after scan_python target is built
 set(copy_target post_build)
@@ -82,11 +83,15 @@ copy_dir(${GAMBIT_DIR}/config
 copy_dir(${GAMBIT_DIR}/scratch
          ${GAMBIT_RUN_DIR}/scratch)
 
+# Copy the scanner python plugins directory
+copy_dir(${GAMBIT_DIR}/ScannerBit/src/scanners/python/plugins
+	 ${GAMBIT_RUN_DIR}/ScannerBit/src/scanners/python/plugins)
 
 # Copy each of the scanner 'backend' shared libraries
-set(MULTINEST_VERSION 3.11)
-set(POLYCHORD_VERSION 1.16)
+set(MULTINEST_VERSION 3.12)
+set(POLYCHORD_VERSION 1.20.1)
 set(DIVER_VERSION 1.0.5)
+set(MINUIT_VERSION 6.23.01)
 
 # Multinest
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/multinest/${MULTINEST_VERSION}/libnest3.so
@@ -99,6 +104,12 @@ copy_file(${GAMBIT_DIR}/ScannerBit/installed/polychord/${POLYCHORD_VERSION}/lib/
 # Diver
 copy_file(${GAMBIT_DIR}/ScannerBit/installed/diver/${DIVER_VERSION}/lib/libdiver.so
           ${GAMBIT_RUN_DIR}/ScannerBit/installed/diver/${DIVER_VERSION}/lib)
+
+# Minuit
+copy_file(${GAMBIT_DIR}/ScannerBit/installed/minuit2/${MINUIT_VERSION}/lib/libMinuit2.so
+	  ${GAMBIT_RUN_DIR}/ScannerBit/installed/minuit2/${MINUIT_VERSION}/lib)
+copy_file(${GAMBIT_DIR}/ScannerBit/installed/minuit2/${MINUIT_VERSION}/lib/libMinuit2Math.so
+          ${GAMBIT_RUN_DIR}/ScannerBit/installed/minuit2/${MINUIT_VERSION}/lib)
 
 # Leaving GreAT out on purpose since it needs ROOT and that is just too painful to deal with.
 

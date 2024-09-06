@@ -1,6 +1,6 @@
 import pyscannerbit.scan as sb
 import pyscannerbit.defaults as defaults
-from pyscannerbit.ScannerBit.python import ScannerBit
+#from pyscannerbit.ScannerBit.python import ScannerBit
 import matplotlib.pyplot as plt
 import copy
 import inspect
@@ -33,7 +33,14 @@ settings["Scanner"]["scanners"]["twalk"] = {"sqrtR": 1.05}
 
 
 # Create scan manager object
-myscan = sb.Scan(test_logl, bounds=[[1., 40.]] * 3, prior_types=["flat", "flat", "log"], prior_func=prior, scanner="twalk", settings=settings, model_name='model1')
+myscan = sb.Scan(test_logl, 
+                 #bounds=[[1., 40.]] * 3, 
+                 #prior_types=["flat", "flat", "log"], 
+                 prior_func=prior, 
+                 scanner="twalk", 
+                 scanner_options=settings["Scanner"]["scanners"]["twalk"], 
+                 #model_name='model1'
+                 )
 myscan.scan()
 
 # Retrieve h5py group object, augmented with some helpful routines

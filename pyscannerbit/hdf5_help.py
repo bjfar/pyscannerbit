@@ -19,7 +19,7 @@ class DataPair:
      return self._data
 
   def valid(self):
-     return np.array(self._valid, dtype=np.bool)
+     return np.array(self._valid, dtype=np.bool_)
 
   def validdata(self):
      return self.data()[self.valid()]
