@@ -1,4 +1,5 @@
-import pyscannerbit.scan as sb
+import pyscannerbit.scan as sb:wq
+
 import pyscannerbit.defaults as defaults
 #from pyscannerbit.ScannerBit.python import ScannerBit
 import matplotlib.pyplot as plt
